@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import Categorie from '@/views/Categorie.vue'
+import CardTheme from '@/views/CardTheme.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +23,11 @@ const router = createRouter({
       path: '/categorie',
       name: 'categorie',
       component: Categorie,
+    },
+    {
+      path: '/CardTheme',
+      name: 'CardTheme',
+      component: CardTheme,
     },
   ],
 })
