@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import CarteTheme from '@/components/carteTheme/carteTheme.vue'
+import cardTheme from '@/components/cardTheme/cardTheme.vue'
 </script>
 
 <template>
-  <CarteTheme />
+  <cardTheme />
 </template>
