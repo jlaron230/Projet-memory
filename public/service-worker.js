@@ -4,11 +4,11 @@ const assets = [
   '/index.html',
   '/manifest.json',
   '/static/main.css',
-  '/static/main.js', // ⚠️ Vérifie le bon chemin de tes fichiers compilés
+  '/static/main.js',
   '/favicon.ico'
 ];
 
-// 📌 Installation du service worker
+// Installation du service worker
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installation...');
   event.waitUntil(
@@ -19,7 +19,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// 📌 Activation du service worker et suppression des anciens caches
+//  Activation du service worker et suppression des anciens caches
 self.addEventListener('activate', (event) => {
   console.log('[ServiceWorker] Activation...');
   event.waitUntil(
@@ -73,7 +73,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        console.log(`✅ Ressource servie depuis le cache : ${event.request.url}`);
+        console.log(` Ressource servie depuis le cache : ${event.request.url}`);
         return cachedResponse;
       }
 
@@ -81,7 +81,7 @@ self.addEventListener('fetch', (event) => {
       const url = new URL(event.request.url);
       if (url.pathname.startsWith('/categories/')) {
         const categoryName = url.pathname.replace('/categories/', ''); // Récupère le nom de la catégorie
-        console.log(`🔄 Requête pour la catégorie: ${categoryName}`);
+        console.log(`Requête pour la catégorie: ${categoryName}`);
 
         return caches.match(`/categories/${categoryName}`).then((cachedCategory) => {
           if (cachedCategory) {
@@ -89,7 +89,7 @@ self.addEventListener('fetch', (event) => {
             return cachedCategory;
           }
 
-          console.log(`🌍 Aucune catégorie trouvée dans le cache, tentative de récupération depuis le réseau`);
+          console.log(` Aucune catégorie trouvée dans le cache, tentative de récupération depuis le réseau`);
           return fetch(event.request).then((networkResponse) => {
             // Mise en cache de la catégorie après récupération du réseau
             return caches.open('v1').then((cache) => {
@@ -112,22 +112,24 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-self.addEventListener('message', async(event) => {
+self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'DELETE_CATEGORY') {
-  try {
-    const cache = await caches.open('v1');
-    const cacheKeys = await caches.keys();
-    for (const request of cacheKeys) {
-      const requestUrl = new URL(request.url);
-      if (requestUrl.pathname.startsWith(`/categories/`)) {
-        await cache.delete(requestUrl.pathname);
-        console.log(`Catégorie supprimée du cache ${requestUrl.pathname}`);
-      }
-    }
-    console.log('[ServiceWorker] Deleting...');
-    } catch (error) {
-    console.error('Erreur pour la suppression de l\'ancien cache :', error);
+    const categoryName = event.data.category;
+    console.log('Suppression de la catégorie dans le service worker:', categoryName);
+
+    //gérer la suppression des ressources du cache
+    caches.open('v1').then((cache) => {
+      cache.keys().then((keys) => {
+        keys.forEach((request) => {
+          if (request.url.includes(`/categories/${categoryName}`)) {
+            cache.delete(request).then(() => {
+              console.log(`Catégorie ${categoryName} supprimée du cache du Service Worker`);
+            });
+          }
+        });
+      });
+    });
   }
-  }
-})
+});
+
 
