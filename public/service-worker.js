@@ -36,6 +36,18 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+
+const putInCache = async (request, response) => {
+  const url = new URL(request.url);
+  if (!url.protocol.includes('http')) {
+    console.warn(`mise en cache impossible sur ${request.url}`);
+    return;
+  }
+  const cache = await caches.open("v1");
+  await cache.put(request, response);
+};
+
+
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CREATE_CATEGORY') {
     const { name, options } = event.data.data;
@@ -56,12 +68,6 @@ self.addEventListener('message', (event) => {
   }
 });
 
-
-
-const putInCache = async (request, response) => {
-  const cache = await caches.open("v1");
-  await cache.put(request, response);
-};
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
@@ -105,4 +111,23 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+self.addEventListener('message', async(event) => {
+  if (event.data && event.data.type === 'DELETE_CATEGORY') {
+  try {
+    const cache = await caches.open('v1');
+    const cacheKeys = await caches.keys();
+    for (const request of cacheKeys) {
+      const requestUrl = new URL(request.url);
+      if (requestUrl.pathname.startsWith(`/categories/`)) {
+        await cache.delete(requestUrl.pathname);
+        console.log(`Catégorie supprimée du cache ${requestUrl.pathname}`);
+      }
+    }
+    console.log('[ServiceWorker] Deleting...');
+    } catch (error) {
+    console.error('Erreur pour la suppression de l\'ancien cache :', error);
+  }
+  }
+})
 

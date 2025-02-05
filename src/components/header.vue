@@ -2,7 +2,7 @@
 <!-- src/components/Accueil.vue -->
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue'
 
 const count = ref<number>(0); // Variable réactive de type nombre
 

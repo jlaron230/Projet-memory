@@ -1,17 +1,6 @@
 <script setup lang="ts">
-import buttonCreate from '../button/button-create.vue'
 import {ref, onMounted } from 'vue'
-import {
-  BriefcaseIcon,
-  CalendarIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  CurrencyDollarIcon,
-  LinkIcon,
-  MapPinIcon,
-  PencilIcon
-} from '@heroicons/vue/20/solid'
-
+import buttondelete from '@/components/button/button-delete.vue'
 const isVisible = ref(false)
 
 const toggleVisible = () => {
@@ -55,7 +44,6 @@ const CreateCategories = () => {
   categoryOptions.value = '';
 };
 
-
 const getCategoriesFromCache = async () => {
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
     const cache = await caches.open('v1');
@@ -92,6 +80,42 @@ const getCategoriesFromCache = async () => {
   }
 };
 
+const DeleteCategories = async (categoryName) => {
+  if (!categoryName) {
+    console.error('⚠️ Aucun nom de catégorie spécifié.');
+    return;
+  }
+
+  if ('caches' in window) {
+    console.log(`🗑 Suppression de la catégorie : ${categoryName}`);
+
+    try {
+      const cache = await caches.open('v1');
+      const cacheKeys = await cache.keys();
+
+      for (const request of cacheKeys) {
+        const requestUrl = new URL(request.url);
+
+        if (requestUrl.pathname.startsWith(`/categories/${categoryName}/`)) {
+          await cache.delete(request); // On passe l'objet Request, pas juste l'URL
+          console.log(`✅ Catégorie supprimée du cache : ${requestUrl.pathname}`);
+        }
+      }
+
+      console.log(`🚀 Suppression terminée pour /categories/${categoryName}/`);
+
+      // Rafraîchir la page après suppression
+      setTimeout(() => {
+        location.reload();
+      }, 500);
+
+    } catch (error) {
+      console.error('⚠️ Erreur lors de la suppression du cache :', error);
+    }
+  }
+};
+
+
 
 
 onMounted(() => {
@@ -100,6 +124,7 @@ onMounted(() => {
       console.log('Service Worker est prêt');
       // Appelle ta fonction pour récupérer les catégories à partir du cache ici
       getCategoriesFromCache();
+
     }).catch((error) => {
       console.error('Service Worker n\'est pas prêt :', error);
     });
@@ -115,9 +140,9 @@ onMounted(() => {
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex place-content-between">
       <h1 class="text-3xl font-bold tracking-tight text-gray-900">Mes catégories</h1>
     </div>
-
     <!-- Formulaire pour créer une catégorie -->
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+
       <form @submit.prevent="CreateCategories" class="mt-5 flex flex-col gap-4">
         <div>
           <label for="categoryName" class="block text-sm font-medium text-gray-700">Nom de la catégorie</label>
@@ -146,6 +171,7 @@ onMounted(() => {
           <button type="submit" class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
             Créer la catégorie
           </button>
+          <buttondelete  @click.prevent="DeleteCategories" />
         </div>
       </form>
       <section class="bg-white shadow-sm">

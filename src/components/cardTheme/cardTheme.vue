@@ -1,4 +1,7 @@
 <!-- component -->
+<script setup lang="ts">
+</script>
+
 <style>
 .w-70 {
   width: 20rem;
@@ -35,5 +38,3 @@
 </section>
 </template>
 
-<script setup lang="ts">
-</script>
