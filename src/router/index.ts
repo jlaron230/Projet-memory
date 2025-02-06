@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Accueil from '@/views/Accueil.vue'
 import Categorie from '@/views/Categorie.vue'
 import CardTheme from '@/views/CardTheme.vue'
-
+import Theme from '@/views/Theme.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +30,12 @@ const router = createRouter({
       name: 'CardTheme',
       component: CardTheme,
     },
+    {
+      path: '/theme',
+      name: 'theme',
+      component: Theme,
+    },
+
   ],
 })
 
