@@ -36,7 +36,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-
 const putInCache = async (request, response) => {
   const url = new URL(request.url);
   if (!url.protocol.includes('http')) {
@@ -46,7 +45,6 @@ const putInCache = async (request, response) => {
   const cache = await caches.open("v1");
   await cache.put(request, response);
 };
-
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CREATE_CATEGORY') {
@@ -67,7 +65,6 @@ self.addEventListener('message', (event) => {
     });
   }
 });
-
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
@@ -111,6 +108,25 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'UPDATE_CATEGORY') {
+    const { name, options } = event.data.data;
+
+    const categoryData = JSON.stringify({ name, options });
+    const request = new Request(`/categories/${name}`);
+    const response = new Response(categoryData, { status: 200, statusText: 'success' });
+
+    caches.open('v1').then((cache) => {
+
+          cache.put(request, response).then(() => {
+            console.log(`Catégorie ${name} mise en cache`);
+          }).catch((error) => {
+            console.error('Erreur lors de la vérification du cache :', error);
+          });
+    })
+  }
+})
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'DELETE_CATEGORY') {
