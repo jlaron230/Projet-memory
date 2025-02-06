@@ -23,8 +23,8 @@
             </router-link>
           </li>
           <li>
-            <router-link to="/themes" class="!text-white text-lg hover:text-blue-300 transition">
-              Mes thèmes
+            <router-link to="/theme" class="!text-white text-lg hover:text-blue-300 transition">
+              Mes theme
             </router-link>
           </li>
           <li>
@@ -59,8 +59,6 @@
       </button>
     </header>
 
-    <!-- Vue dynamique des pages -->
-    <router-view />
   </div>
 </template>
 
