@@ -4,7 +4,6 @@ import buttondelete from '@/components/button/button-delete.vue'
 import { PencilIcon } from '@heroicons/vue/20/solid'
 
 const categoryName = ref<string>('')  // Pour la création de la catégorie
-const categoryOptions = ref('')
 const categories = ref<any[]>([]) // Liste des catégories
 const isEditable = ref(false)  // Si un formulaire est en mode édition
 const editingCategory = ref<any | null>(null)  // Catégorie en édition
@@ -13,8 +12,7 @@ const editingCategory = ref<any | null>(null)  // Catégorie en édition
 const toggleEdit = (category: any) => {
   // Garde une référence à la catégorie à éditer
   editingCategory.value = category
-  categoryName.value = category.name
-  categoryOptions.value = category.options.join(', ')  // Affiche les options sous forme de texte
+  categoryName.value = category.name// Affiche les options sous forme de texte
   isEditable.value = true
 }
 
@@ -27,10 +25,6 @@ const CreateCategories = () => {
 
   const categoryData = {
     name: categoryName.value,
-    options: categoryOptions.value
-      .split(',')
-      .map((option) => option.trim())
-      .filter(Boolean)
   }
 
   // Envoi de la catégorie au Service Worker
@@ -49,7 +43,6 @@ const CreateCategories = () => {
 
   // Réinitialisation des champs du formulaire
   categoryName.value = ''
-  categoryOptions.value = ''
 }
 
 // Fonction pour récupérer les catégories depuis le cache
@@ -97,10 +90,6 @@ const PutCategories = () => {
   if (categoryIndex !== -1) {
     categories.value[categoryIndex] = {
       name: categoryName.value,
-      options: categoryOptions.value
-        .split(',')
-        .map((option) => option.trim())
-        .filter(Boolean)
     }
   }
 
@@ -110,8 +99,7 @@ const PutCategories = () => {
       type: 'UPDATE_CATEGORY',
       data: {
         originalName: editingCategory.value.name,  // Nom original à mettre à jour
-        newName: categoryName.value,  // Nouveau nom
-        options: categoryOptions.value  // Options mises à jour
+        newName: categoryName.value  // Nouveau nom// Options mises à jour
       }
     })
   }
@@ -120,7 +108,6 @@ const PutCategories = () => {
   isEditable.value = false
   editingCategory.value = null
   categoryName.value = ''
-  categoryOptions.value = ''
 }
 
 // Fonction pour annuler l'édition
@@ -128,7 +115,6 @@ const cancelEdit = () => {
   isEditable.value = false
   editingCategory.value = null
   categoryName.value = ''
-  categoryOptions.value = ''
 }
 
 // Fonction pour supprimer une catégorie
@@ -182,19 +168,6 @@ onMounted(() => {
           />
         </div>
 
-        <!-- Options supplémentaires -->
-        <div>
-          <label for="categoryOptions"
-                 class="block text-sm font-medium text-gray-700">Options</label>
-          <input
-            id="categoryOptions"
-            v-model="categoryOptions"
-            type="text"
-            placeholder="Exemple: option 1, option 2"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
-        </div>
-
         <div class="flex justify-end">
           <button type="submit"
                   class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
@@ -218,13 +191,6 @@ onMounted(() => {
                 v-model="categoryName"
                 type="text"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              />
-              <input
-                v-model="categoryOptions"
-                type="text"
-                required
-                placeholder="Exemple: option 1, option 2"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               />
               <button type="submit" class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
