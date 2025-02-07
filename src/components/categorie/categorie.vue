@@ -3,23 +3,28 @@ import { ref, onMounted } from 'vue'
 import buttondelete from '@/components/button/button-delete.vue'
 import { PencilIcon } from '@heroicons/vue/20/solid'
 
-const categoryName = ref<string>('')
+const categoryName = ref<string>('')  // Pour la création de la catégorie
 const categoryOptions = ref('')
-const categories = ref<any[]>([])
-const isEditable = ref<boolean>(false)
-const editingCategory = ref<string | null>(null)
+const categories = ref<any[]>([]) // Liste des catégories
+const isEditable = ref(false)  // Si un formulaire est en mode édition
+const editingCategory = ref<any | null>(null)  // Catégorie en édition
 
-const toggleEdit = (category:any) => {
+// Fonction pour activer l'édition
+const toggleEdit = (category: any) => {
+  // Garde une référence à la catégorie à éditer
+  editingCategory.value = category
   categoryName.value = category.name
-  editingCategory.value = categoryOptions.value
+  categoryOptions.value = category.options.join(', ')  // Affiche les options sous forme de texte
   isEditable.value = true
 }
 
+// Fonction pour créer une nouvelle catégorie
 const CreateCategories = () => {
   if (!categoryName.value.trim()) {
-    alert('le nom de la catégorie est requis')
+    alert('Le nom de la catégorie est requis')
     return
   }
+
   const categoryData = {
     name: categoryName.value,
     options: categoryOptions.value
@@ -47,6 +52,7 @@ const CreateCategories = () => {
   categoryOptions.value = ''
 }
 
+// Fonction pour récupérer les catégories depuis le cache
 const getCategoriesFromCache = async () => {
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
     const cache = await caches.open('v1')
@@ -57,9 +63,8 @@ const getCategoriesFromCache = async () => {
     console.log('Clés du cache :', cacheKeys)
 
     for (const request of cacheKeys) {
-      const requestUrl = new URL(request.url) // Créer un objet URL à partir de la requête
+      const requestUrl = new URL(request.url)
 
-      // Vérifier le chemin relatif de l'URL (sans le domaine)
       if (requestUrl.pathname.startsWith('/categories/')) {
         try {
           const response = await cache.match(request)
@@ -75,49 +80,71 @@ const getCategoriesFromCache = async () => {
       }
     }
 
-    // Log pour vérifier que les catégories sont bien récupérées
-    console.log('Catégories mises à jour :', cachedCategories)
-
     // Mise à jour de la variable `categories`
     categories.value = cachedCategories
   }
 }
 
-const PutCategories = (category: any) => {
+// Fonction pour mettre à jour une catégorie
+const PutCategories = () => {
   if (!categoryName.value.trim()) {
-    alert('le nom de la catégorie est requis')
+    alert('Le nom de la catégorie est requis')
     return
   }
 
-  const categoryIndex = categories.value.findIndex(c => c.name === category.name);
+  // Mise à jour de la catégorie dans le tableau local de Vue
+  const categoryIndex = categories.value.findIndex(c => c.name === editingCategory.value.name)
   if (categoryIndex !== -1) {
-    categories.value[categoryIndex].name = categoryName.value;
+    categories.value[categoryIndex] = {
+      name: categoryName.value,
+      options: categoryOptions.value
+        .split(',')
+        .map((option) => option.trim())
+        .filter(Boolean)
+    }
   }
 
+  // Envoi de la mise à jour au Service Worker pour qu'il mette à jour le cache
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage({
       type: 'UPDATE_CATEGORY',
-      data: {name: categoryName.value, categoryOptions: categoryOptions.value}
+      data: {
+        originalName: editingCategory.value.name,  // Nom original à mettre à jour
+        newName: categoryName.value,  // Nouveau nom
+        options: categoryOptions.value  // Options mises à jour
+      }
     })
-    isEditable.value = false
-    editingCategory.value = null
   }
+
+  // Désactiver l'édition après avoir sauvegardé
+  isEditable.value = false
+  editingCategory.value = null
+  categoryName.value = ''
+  categoryOptions.value = ''
 }
 
+// Fonction pour annuler l'édition
+const cancelEdit = () => {
+  isEditable.value = false
+  editingCategory.value = null
+  categoryName.value = ''
+  categoryOptions.value = ''
+}
+
+// Fonction pour supprimer une catégorie
 const DeleteCategories = async (categoryName: string) => {
   categories.value = categories.value.filter(c => c.name !== categoryName)
 
-  console.log(` Suppression de la catégorie : ${categoryName}`)
+  console.log(`Suppression de la catégorie : ${categoryName}`)
 
-      // Envoyer un message au Service Worker pour supprimer la catégorie
-      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'DELETE_CATEGORY',
-          category: categoryName
-});
+  // Envoyer un message au Service Worker pour supprimer la catégorie
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'DELETE_CATEGORY',
+      category: categoryName
+    })
+  }
 }
-};
-
 
 onMounted(() => {
   if (navigator.serviceWorker) {
@@ -133,7 +160,6 @@ onMounted(() => {
     console.error('Service Worker n\'est pas pris en charge par ce navigateur')
   }
 })
-
 </script>
 
 <template>
@@ -143,7 +169,6 @@ onMounted(() => {
     </div>
     <!-- Formulaire pour créer une catégorie -->
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-
       <form @submit.prevent="CreateCategories" class="mt-5 flex flex-col gap-4">
         <div>
           <label for="categoryName" class="block text-sm font-medium text-gray-700">Nom de la
@@ -177,42 +202,48 @@ onMounted(() => {
           </button>
         </div>
       </form>
-      <section class="bg-white shadow-sm">
-        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex place-content-between">
-          <h1 class="text-3xl font-bold tracking-tight text-gray-900">Mes catégories</h1>
-        </div>
 
-        <!-- Liste des catégories -->
-        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 gap-4">
-          <div v-if="categories.length > 0" class="space-y-6">
-            <div v-for="(category, index) in categories" :key="index"
-                 class="bg-gray-100 p-4 rounded-lg flex gap-4">
-              <div class="flex items-center gap-4">
-              <h2  v-if="!isEditable || editingCategory !== category.name" class="text-xl font-semibold text-gray-900">{{ category.name }}</h2>
-                <form v-if="!isEditable && editingCategory !== category.name" @submit.prevent="PutCategories(category)" class="mt-5 flex flex-col gap-4">
-                  <input
-                    v-model="categoryName"
-                    type="text"
-                    required
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                  />
-                  <button type="submit" class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600"/>
-                </form>
-              <p class="text-sm text-gray-600">Options:
-                {{ category.options ? category.options.join(', ') : 'Aucune option' }}</p>
-                <button @click.prevent="toggleEdit(category)">
+      <!-- Liste des catégories -->
+      <div v-if="categories.length > 0" class="space-y-6">
+        <div v-for="(category, index) in categories" :key="index" class="bg-gray-100 p-4 rounded-lg flex gap-4">
+          <div class="flex items-center gap-4">
+            <!-- Afficher le nom de la catégorie si on n'est pas en mode édition -->
+            <h2 v-if="!isEditable || editingCategory?.name !== category.name" class="text-xl font-semibold text-gray-900">
+              {{ category.name }}
+            </h2>
+
+            <!-- Formulaire d'édition de catégorie -->
+            <form v-if="isEditable && editingCategory?.name === category.name" @submit.prevent="PutCategories" class="mt-5 flex flex-col gap-4">
+              <input
+                v-model="categoryName"
+                type="text"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              />
+              <input
+                v-model="categoryOptions"
+                type="text"
+                required
+                placeholder="Exemple: option 1, option 2"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              />
+              <button type="submit" class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
+                Sauvegarder
+              </button>
+            </form>
+
+            <button @click.prevent="toggleEdit(category)">
               <PencilIcon class="px-3 py-2 w-[3rem]" />
-                </button>
-              </div>
-              <!-- Bouton de suppression pour chaque catégorie -->
-              <buttondelete @click.prevent="DeleteCategories(category.name)" />
-            </div>
+            </button>
           </div>
-          <div v-else class="text-center text-gray-500">
-            <p>Aucune catégorie créée pour le moment.</p>
-          </div>
+
+          <!-- Bouton de suppression pour chaque catégorie -->
+          <buttondelete @click.prevent="DeleteCategories(category.name)" />
         </div>
-      </section>
+      </div>
+      <div v-else class="text-center text-gray-500">
+        <p>Aucune catégorie créée pour le moment.</p>
+      </div>
     </div>
   </section>
 </template>
