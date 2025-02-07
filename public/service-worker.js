@@ -36,16 +36,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-const putInCache = async (request, response) => {
-  const url = new URL(request.url);
-  if (!url.protocol.includes('http')) {
-    console.warn(`mise en cache impossible sur ${request.url}`);
-    return;
-  }
-  const cache = await caches.open("v1");
-  await cache.put(request, response);
-};
-
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CREATE_CATEGORY') {
     const { name, options } = event.data.data;
@@ -66,6 +56,51 @@ self.addEventListener('message', (event) => {
   }
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'UPDATE_CATEGORY') {
+    const { originalName, newName, options } = event.data.data;
+
+    const categoryData = JSON.stringify({ name: newName, options });
+
+    // Ouvrir le cache
+    caches.open('v1').then((cache) => {
+      const oldRequest = new Request(`/categories/${originalName}`);
+
+      // Supprimer l'ancienne catégorie du cache si elle existe
+      cache.delete(oldRequest).then(() => {
+        console.log(`Ancienne catégorie ${originalName} supprimée du cache`);
+
+        // Ajouter la nouvelle catégorie avec le nouveau nom
+        const newRequest = new Request(`/categories/${newName}`);
+        const response = new Response(categoryData, { status: 200, statusText: 'success' });
+
+        cache.put(newRequest, response).then(() => {
+          console.log(`Catégorie ${newName} mise à jour dans le cache`);
+        }).catch((error) => {
+          console.error('Erreur lors de la mise à jour du cache de la catégorie :', error);
+        });
+      }).catch((error) => {
+        console.error('Erreur lors de la suppression de l\'ancienne catégorie du cache :', error);
+      });
+    });
+  }
+
+  if (event.data && event.data.type === 'DELETE_CATEGORY') {
+    const categoryName = event.data.category;
+    console.log('Suppression de la catégorie dans le service worker:', categoryName);
+
+    // Supprimer la catégorie du cache
+    caches.open('v1').then((cache) => {
+      const request = new Request(`/categories/${categoryName}`);
+      cache.delete(request).then(() => {
+        console.log(`Catégorie ${categoryName} supprimée du cache du Service Worker`);
+      }).catch((error) => {
+        console.error('Erreur lors de la suppression du cache de la catégorie :', error);
+      });
+    });
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
@@ -74,31 +109,7 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
 
-      // Vérification si la requête correspond à une catégorie
-      const url = new URL(event.request.url);
-      if (url.pathname.startsWith('/categories/')) {
-        const categoryName = url.pathname.replace('/categories/', ''); // Récupère le nom de la catégorie
-        console.log(`Requête pour la catégorie: ${categoryName}`);
-
-        return caches.match(`/categories/${categoryName}`).then((cachedCategory) => {
-          if (cachedCategory) {
-            console.log(`✅ Catégorie ${categoryName} servie depuis le cache`);
-            return cachedCategory;
-          }
-
-          console.log(` Aucune catégorie trouvée dans le cache, tentative de récupération depuis le réseau`);
-          return fetch(event.request).then((networkResponse) => {
-            // Mise en cache de la catégorie après récupération du réseau
-            return caches.open('v1').then((cache) => {
-              cache.put(event.request, networkResponse.clone());
-              console.log(`📥 Catégorie ${categoryName} mise en cache`);
-              return networkResponse;
-            });
-          });
-        });
-      }
-
-      // Si ce n'est pas une requête pour une catégorie, récupérer normalement du réseau
+      // Si ce n'est pas une catégorie, on récupère normalement du réseau
       return fetch(event.request).then((networkResponse) => {
         return caches.open(CACHE_ASSETS).then((cache) => {
           putInCache(event.request, networkResponse.clone());
@@ -109,43 +120,12 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'UPDATE_CATEGORY') {
-    const { name, options } = event.data.data;
-
-    const categoryData = JSON.stringify({ name, options });
-    const request = new Request(`/categories/${name}`);
-    const response = new Response(categoryData, { status: 200, statusText: 'success' });
-
-    caches.open('v1').then((cache) => {
-
-          cache.put(request, response).then(() => {
-            console.log(`Catégorie ${name} mise en cache`);
-          }).catch((error) => {
-            console.error('Erreur lors de la vérification du cache :', error);
-          });
-    })
+const putInCache = async (request, response) => {
+  const url = new URL(request.url);
+  if (!url.protocol.includes('http')) {
+    console.warn(`mise en cache impossible sur ${request.url}`);
+    return;
   }
-})
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'DELETE_CATEGORY') {
-    const categoryName = event.data.category;
-    console.log('Suppression de la catégorie dans le service worker:', categoryName);
-
-    //gérer la suppression des ressources du cache
-    caches.open('v1').then((cache) => {
-      cache.keys().then((keys) => {
-        keys.forEach((request) => {
-          if (request.url.includes(`/categories/${categoryName}`)) {
-            cache.delete(request).then(() => {
-              console.log(`Catégorie ${categoryName} supprimée du cache du Service Worker`);
-            });
-          }
-        });
-      });
-    });
-  }
-});
-
-
+  const cache = await caches.open("v1");
+  await cache.put(request, response);
+};
