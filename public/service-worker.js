@@ -8,7 +8,18 @@ const assets = [
   '/favicon.ico'
 ];
 
-// Installation du service worker
+const limitCacheSize = async (cacheName, maxItems) => {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  console.log(`[ServiceWorker] Taille actuelle du cache : ${keys.length} / Limite : ${maxItems}`); // Nouvelle ligne pour voir la tailles
+  if (keys.length > maxItems) {
+    console.log(`[ServiceWorker] Limite atteinte, suppression de : ${keys[0].url}`);
+    await cache.delete(keys[0]); // Supprime le plus ancien
+    await limitCacheSize(cacheName, maxItems); // Re-vérifie après suppression
+  }
+};
+
+// 📌 Installation du service worker
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installation...');
   event.waitUntil(
@@ -19,7 +30,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-//  Activation du service worker et suppression des anciens caches
+// 📌 Activation du service worker et suppression des anciens caches
 self.addEventListener('activate', (event) => {
   console.log('[ServiceWorker] Activation...');
   event.waitUntil(
@@ -36,96 +47,26 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'CREATE_CATEGORY') {
-    const { name, options } = event.data.data;
-    console.log('Nouvelle catégorie reçue:', { name, options });
-
-    const categoryData = JSON.stringify({ name, options });
-    const request = new Request(`/categories/${name}`);
-    const response = new Response(categoryData, { status: 200, statusText: 'success' });
-
-    // Mise en cache de la catégorie
-    caches.open('v1').then((cache) => {
-      cache.put(request, response).then(() => {
-        console.log(`Catégorie ${name} mise en cache`);
-      }).catch((error) => {
-        console.error('Erreur lors de la mise en cache de la catégorie :', error);
-      });
-    });
-  }
-});
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'UPDATE_CATEGORY') {
-    const { originalName, newName, options } = event.data.data;
-
-    const categoryData = JSON.stringify({ name: newName, options });
-
-    // Ouvrir le cache
-    caches.open('v1').then((cache) => {
-      const oldRequest = new Request(`/categories/${originalName}`);
-
-      // Supprimer l'ancienne catégorie du cache si elle existe
-      cache.delete(oldRequest).then(() => {
-        console.log(`Ancienne catégorie ${originalName} supprimée du cache`);
-
-        // Ajouter la nouvelle catégorie avec le nouveau nom
-        const newRequest = new Request(`/categories/${newName}`);
-        const response = new Response(categoryData, { status: 200, statusText: 'success' });
-
-        cache.put(newRequest, response).then(() => {
-          console.log(`Catégorie ${newName} mise à jour dans le cache`);
-        }).catch((error) => {
-          console.error('Erreur lors de la mise à jour du cache de la catégorie :', error);
-        });
-      }).catch((error) => {
-        console.error('Erreur lors de la suppression de l\'ancienne catégorie du cache :', error);
-      });
-    });
-  }
-
-  if (event.data && event.data.type === 'DELETE_CATEGORY') {
-    const categoryName = event.data.category;
-    console.log('Suppression de la catégorie dans le service worker:', categoryName);
-
-    // Supprimer la catégorie du cache
-    caches.open('v1').then((cache) => {
-      const request = new Request(`/categories/${categoryName}`);
-      cache.delete(request).then(() => {
-        console.log(`Catégorie ${categoryName} supprimée du cache du Service Worker`);
-      }).catch((error) => {
-        console.error('Erreur lors de la suppression du cache de la catégorie :', error);
-      });
-    });
-  }
-});
-
+// 📌 Interception des requêtes réseau pour servir les fichiers en cache
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        console.log(` Ressource servie depuis le cache : ${event.request.url}`);
+        console.log(`✅ Ressource servie depuis le cache : ${event.request.url}`);
         return cachedResponse;
       }
-
-      // Si ce n'est pas une catégorie, on récupère normalement du réseau
-      return fetch(event.request).then((networkResponse) => {
-        return caches.open(CACHE_ASSETS).then((cache) => {
-          putInCache(event.request, networkResponse.clone());
-          return networkResponse;
-        });
-      });
+      console.log(`🌍 Récupération réseau : ${event.request.url}`);
+      return fetch(event.request)
+        .then((networkResponse) => {
+          return caches.open(CACHE_ASSETS).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+            limitCacheSize(CACHE_ASSETS, 50);
+            console.log(`📥 Mise en cache de : ${event.request.url}`);
+            return networkResponse;
+          });
+        })
+        .catch(() => caches.match('/index.html')); // Fallback si offline
     })
   );
 });
 
-const putInCache = async (request, response) => {
-  const url = new URL(request.url);
-  if (!url.protocol.includes('http')) {
-    console.warn(`mise en cache impossible sur ${request.url}`);
-    return;
-  }
-  const cache = await caches.open("v1");
-  await cache.put(request, response);
-};
