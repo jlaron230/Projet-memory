@@ -4,9 +4,20 @@ const assets = [
   '/index.html',
   '/manifest.json',
   '/static/main.css',
-  '/static/main.js', // ⚠️ Vérifie le bon chemin de tes fichiers compilés
+  '/static/main.js',
   '/favicon.ico'
 ];
+
+const limitCacheSize = async (cacheName, maxItems) => {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  console.log(`[ServiceWorker] Taille actuelle du cache : ${keys.length} / Limite : ${maxItems}`); // Nouvelle ligne pour voir la tailles
+  if (keys.length > maxItems) {
+    console.log(`[ServiceWorker] Limite atteinte, suppression de : ${keys[0].url}`);
+    await cache.delete(keys[0]); // Supprime le plus ancien
+    await limitCacheSize(cacheName, maxItems); // Re-vérifie après suppression
+  }
+};
 
 // 📌 Installation du service worker
 self.addEventListener('install', (event) => {
@@ -49,6 +60,7 @@ self.addEventListener('fetch', (event) => {
         .then((networkResponse) => {
           return caches.open(CACHE_ASSETS).then((cache) => {
             cache.put(event.request, networkResponse.clone());
+            limitCacheSize(CACHE_ASSETS, 50);
             console.log(`📥 Mise en cache de : ${event.request.url}`);
             return networkResponse;
           });
@@ -57,3 +69,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
