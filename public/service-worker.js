@@ -4,17 +4,20 @@ import { createCard, deleteCard, updateCard } from './cards.js'
 // Définir le cache pour les assets
 const CACHE_ASSETS = 'assets-v1';
 
+
 // Écoute l'événement 'install' pour mettre en cache les ressources nécessaires
+
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installation...');
   event.waitUntil(cacheAssets());
 });
 
-// Activation et suppression des anciens caches
+
 self.addEventListener('activate', (event) => {
   console.log('[ServiceWorker] Activation...');
   event.waitUntil(cleanUpOldCaches());
 });
+
 
 // Gestion des messages du service worker
 self.addEventListener('message', (event) => {
@@ -54,6 +57,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
+
         console.log(`Ressource servie depuis le cache : ${event.request.url}`);
         return cachedResponse;
       }
