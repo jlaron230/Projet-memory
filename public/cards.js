@@ -1,8 +1,8 @@
 
 export const CACHE_CARDS = 'cards-v1';
 
-export const createCard = async (name, options) => {
-  const cardData = JSON.stringify({ name, options });
+export const createCard = async (name, options, value) => {
+  const cardData = JSON.stringify({ name, options, value });
   const request = new Request(`/cards/${name}`);
   const response = new Response(cardData, { status: 200, statusText: 'success' });
 
@@ -11,16 +11,17 @@ export const createCard = async (name, options) => {
   console.log(`Carte ${name} mise en cache`);
 };
 
-export const updateCard = async (originalName, newName, options) => {
-  const cardData = JSON.stringify({ name: newName, options });
+export const updateCard = async (originalName, newName, options, newQuestion, originalQuestion) => {
+  const cardData = JSON.stringify({ name: newName, options, newQuestion, originalQuestion });
   const oldRequest = new Request(`/cards/${originalName}`);
   const newRequest = new Request(`/cards/${newName}`);
+  const oldRequestQuestion = new Request(`/cards/${originalQuestion}`);
   const response = new Response(cardData, { status: 200, statusText: 'success' });
 
   const cache = await caches.open(CACHE_CARDS);
-  await cache.delete(oldRequest);
+  await cache.delete(oldRequest, oldRequestQuestion);
   await cache.put(newRequest, response);
-  console.log(`Carte ${newName} mise à jour dans le cache`);
+  console.log(`Carte ${newName} et ${newQuestion} mise à jour dans le cache`);
 };
 
 export const deleteCard = async (CardName) => {

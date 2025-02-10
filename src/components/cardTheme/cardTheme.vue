@@ -4,6 +4,7 @@ import buttondelete from '@/components/button/button-delete.vue'
 import { PencilIcon } from '@heroicons/vue/20/solid'
 
 const CardName = ref<string>('')  // Pour la création de la carte
+const CardQuestion = ref<string>('')  // Pour la création de la question
 const cards = ref<any[]>([]) // Liste des cartes
 const isEditable = ref(false)  // Si un formulaire est en mode édition
 const editingCard = ref<any | null>(null)  // carte en édition
@@ -13,18 +14,20 @@ const toggleEdit = (cards: any) => {
   // Garde une référence à la carte à éditer
   editingCard.value = cards
   CardName.value = cards.name// Affiche les options sous forme de texte
+  CardQuestion.value = cards.value// Affiche les options sous forme de texte
   isEditable.value = true
 }
 
 // Fonction pour créer une nouvelle carte
 const CreateCards = () => {
-  if (!CardName.value.trim()) {
-    alert('Le nom de la carte est requis')
+  if (!CardName.value.trim() && !CardQuestion.value.trim()) {
+    alert('Le nom de la carte et la question est requis')
     return
   }
 
   const cardData = {
     name: CardName.value,
+    value: CardQuestion.value,
   }
 
   // Envoi de la carte au Service Worker
@@ -43,6 +46,7 @@ const CreateCards = () => {
 
   // Réinitialisation des champs du formulaire
   CardName.value = ''
+  CardQuestion.value = ''
 }
 
 // Fonction pour récupérer les cartes depuis le cache
@@ -79,8 +83,8 @@ const getCardsFromCache = async () => {
 
 // Fonction pour mettre à jour une carte
 const PutCards = () => {
-  if (!CardName.value.trim()) {
-    alert('Le nom de la carte est requis')
+  if (!CardName.value.trim() && !CardQuestion.value.trim()) {
+    alert('Le nom de la carte et la question est requis')
     return
   }
 
@@ -89,6 +93,7 @@ const PutCards = () => {
   if (cardIndex !== -1) {
     cards.value[cardIndex] = {
       name: CardName.value,
+      value: CardQuestion.value,
     }
   }
 
@@ -98,7 +103,9 @@ const PutCards = () => {
       type: 'UPDATE_CARD',
       data: {
         originalName: editingCard.value.name,  // Nom original à mettre à jour
-        newName: CardName.value  // Nouveau nom// Options mises à jour
+        newName: CardName.value, // Nouveau nom// Options mises à jour
+        originalQuestion: editingCard.value.name,
+        newQuestion: CardQuestion.value,
       }
     })
   }
@@ -107,6 +114,7 @@ const PutCards = () => {
   isEditable.value = false
   editingCard.value = null
   CardName.value = ''
+  CardQuestion.value = ''
 }
 
 // Fonction pour annuler l'édition
@@ -114,6 +122,7 @@ const cancelEdit = () => {
   isEditable.value = false
   editingCard.value = null
   CardName.value = ''
+  CardQuestion.value = ''
 }
 
 // Fonction pour supprimer une carte
@@ -177,6 +186,14 @@ onMounted(() => {
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
           />
+          <label for="cardQuestion" class="block text-sm font-medium text-gray-700">Question</label>
+          <input
+            id="cardQuestion"
+            v-model="CardQuestion"
+            type="text"
+            required
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          />
         </div>
 
         <div class="flex justify-end">
@@ -193,13 +210,19 @@ onMounted(() => {
           <div class="flex items-center gap-4">
             <!-- Afficher le nom de la carte si on n'est pas en mode édition -->
             <h2 v-if="!isEditable || editingCard?.name !== card.name" class="text-xl font-semibold text-gray-900">
-              {{ card.name }}
+              {{ card.name }} {{card.value}}
             </h2>
 
             <!-- Formulaire d'édition de cartes -->
             <form v-if="isEditable && editingCard?.name === card.name" @submit.prevent="PutCards" class="mt-5 flex flex-col gap-4">
               <input
                 v-model="CardName"
+                type="text"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              />
+              <input
+                v-model="CardQuestion"
                 type="text"
                 required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"

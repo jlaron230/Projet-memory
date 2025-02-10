@@ -34,8 +34,8 @@ self.addEventListener('message', (event) => {
   }
 
   if (event.data && event.data.type === 'CREATE_CARD') {
-    const { name, options } = event.data.data;
-    createCard(name, options);
+    const { name, options, value } = event.data.data;
+    createCard(name, options, value);
   }
 
   if (event.data && event.data.type === 'UPDATE_CARD') {
