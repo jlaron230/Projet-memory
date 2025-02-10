@@ -48,35 +48,34 @@ const CreateCategories = () => {
 // Fonction pour récupérer les catégories depuis le cache
 const getCategoriesFromCache = async () => {
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-    const cache = await caches.open('v1')
-    const cachedCategories = []
+    const cache = await caches.open('categories-v1');
+    const cachedCategories = [];
 
-    // Parcourir toutes les clés du cache pour récupérer les catégories
-    const cacheKeys = await cache.keys()
-    console.log('Clés du cache :', cacheKeys)
+    const cacheKeys = await cache.keys();
+    console.log('Clés du cache :', cacheKeys);
 
     for (const request of cacheKeys) {
-      const requestUrl = new URL(request.url)
+      const requestUrl = new URL(request.url);
 
-      if (requestUrl.pathname.startsWith('/categories/')) {
+      if (requestUrl.pathname.startsWith('/categories/')) { // Vérifie bien que les catégories sont dans le bon cache
         try {
-          const response = await cache.match(request)
+          const response = await cache.match(request);
 
           if (response && response.ok) {
-            const categoryData = await response.json()
-            console.log('Catégorie récupérée depuis le cache :', categoryData)
-            cachedCategories.push(categoryData)
+            const categoryData = await response.json();
+            console.log('Catégorie récupérée depuis le cache :', categoryData);
+            cachedCategories.push(categoryData);
           }
         } catch (error) {
-          console.error('Erreur lors de la récupération de la catégorie du cache :', error)
+          console.error('Erreur lors de la récupération de la catégorie du cache :', error);
         }
       }
     }
 
-    // Mise à jour de la variable `categories`
-    categories.value = cachedCategories
+    categories.value = cachedCategories;
+    console.log('Catégories après récupération du cache :', categories.value);
   }
-}
+};
 
 // Fonction pour mettre à jour une catégorie
 const PutCategories = () => {
@@ -119,18 +118,30 @@ const cancelEdit = () => {
 
 // Fonction pour supprimer une catégorie
 const DeleteCategories = async (categoryName: string) => {
-  categories.value = categories.value.filter(c => c.name !== categoryName)
+  if (!categoryName || typeof categoryName !== 'string') return console.error('Nom de catégorie invalide');
 
-  console.log(`Suppression de la catégorie : ${categoryName}`)
+  console.log(`Suppression de la catégorie : ${categoryName}`);
 
-  // Envoyer un message au Service Worker pour supprimer la catégorie
-  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({
-      type: 'DELETE_CATEGORY',
-      category: categoryName
-    })
+  // 1. Supprimer de la liste locale
+  categories.value = categories.value.filter(c => c.name !== categoryName);
+
+  // 2. Supprimer du cache et envoyer au Service Worker
+  if ('caches' in window) {
+    try {
+      const cache = await caches.open('categories-v1');
+      for (const request of await cache.keys()) {
+        if (new URL(request.url).pathname === `/categories/${encodeURIComponent(categoryName)}`) {
+          await cache.delete(request);
+          console.log(`Catégorie supprimée du cache`);
+          break;
+        }
+      }
+      navigator.serviceWorker?.controller?.postMessage({ type: 'DELETE_CATEGORY', category: categoryName });
+    } catch (error) {
+      console.error('Erreur lors de la suppression du cache', error);
+    }
   }
-}
+};
 
 onMounted(() => {
   if (navigator.serviceWorker) {
