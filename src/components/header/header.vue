@@ -9,7 +9,6 @@
       ]"
     >
       <h1 class="text-3xl font-bold">Projet Memory</h1>
-
       <nav>
         <ul class="flex gap-4">
           <li>
@@ -18,7 +17,11 @@
             </router-link>
           </li>
           <li>
-            <router-link to="/categorie" class="!text-white text-lg hover:text-blue-300 transition">
+            <router-link
+              to="/categorie"
+              class="!text-white text-lg hover:text-blue-300 transition"
+              @click="reloadCategory"
+            >
               Catégorie
             </router-link>
           </li>
