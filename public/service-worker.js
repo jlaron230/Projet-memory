@@ -37,13 +37,13 @@ self.addEventListener('message', (event) => {
   }
 
   if (event.data && event.data.type === 'CREATE_CARD') {
-    const { name, options, value } = event.data.data;
-    createCard(name, options, value);
+    const { name, options, value, response } = event.data.data;
+    createCard(name, options, value, response);
   }
 
   if (event.data && event.data.type === 'UPDATE_CARD') {
-    const { originalName, newName, options } = event.data.data;
-    updateCard(originalName, newName, options);
+    const { originalName, newName, options, newQuestion, originalQuestion, originalResponse, newResponse } = event.data.data;
+    updateCard(originalName, newName, options, newQuestion, originalQuestion, newResponse, originalResponse);
   }
 
   if (event.data && event.data.type === 'DELETE_CARD') {

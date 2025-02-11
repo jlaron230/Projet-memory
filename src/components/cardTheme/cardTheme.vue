@@ -2,12 +2,30 @@
 import { ref, onMounted } from 'vue'
 import buttondelete from '@/components/button/button-delete.vue'
 import { PencilIcon } from '@heroicons/vue/20/solid'
+import modalMemory from '@/components/cardTheme/modalMemory.vue'
 
 const CardName = ref<string>('')  // Pour la création de la carte
 const CardQuestion = ref<string>('')  // Pour la création de la question
+const CardResponse = ref<string>('')  // Pour la création de la réponse
 const cards = ref<any[]>([]) // Liste des cartes
 const isEditable = ref(false)  // Si un formulaire est en mode édition
 const editingCard = ref<any | null>(null)  // carte en édition
+const isModalOpen = ref(false)
+const selectedQuestion = ref<string | null>(null);
+const selectedNameCard = ref<string | null>(null);
+
+// Fonction pour activer et désactiver la modal
+const modalVisible = (question: string, nameCard: string,) => {
+isModalOpen.value = true
+  selectedQuestion.value = question;
+  selectedNameCard.value = nameCard;
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  selectedQuestion.value = null;
+  selectedNameCard.value = null;
+}
 
 // Fonction pour activer l'édition
 const toggleEdit = (cards: any) => {
@@ -15,12 +33,13 @@ const toggleEdit = (cards: any) => {
   editingCard.value = cards
   CardName.value = cards.name// Affiche les options sous forme de texte
   CardQuestion.value = cards.value// Affiche les options sous forme de texte
+  CardResponse.value = cards.responseCard
   isEditable.value = true
 }
 
 // Fonction pour créer une nouvelle carte
 const CreateCards = () => {
-  if (!CardName.value.trim() && !CardQuestion.value.trim()) {
+  if (!CardName.value.trim() && !CardQuestion.value.trim() && !CardResponse.value.trim()) {
     alert('Le nom de la carte et la question est requis')
     return
   }
@@ -28,6 +47,7 @@ const CreateCards = () => {
   const cardData = {
     name: CardName.value,
     value: CardQuestion.value,
+    responseCard: CardResponse.value,
   }
 
   // Envoi de la carte au Service Worker
@@ -47,6 +67,7 @@ const CreateCards = () => {
   // Réinitialisation des champs du formulaire
   CardName.value = ''
   CardQuestion.value = ''
+  CardResponse.value = ''
 }
 
 // Fonction pour récupérer les cartes depuis le cache
@@ -83,7 +104,7 @@ const getCardsFromCache = async () => {
 
 // Fonction pour mettre à jour une carte
 const PutCards = () => {
-  if (!CardName.value.trim() && !CardQuestion.value.trim()) {
+  if (!CardName.value.trim() && !CardQuestion.value.trim() && !CardResponse.value.trim()) {
     alert('Le nom de la carte et la question est requis')
     return
   }
@@ -91,10 +112,9 @@ const PutCards = () => {
   // Mise à jour de la carte dans le tableau local de Vue
   const cardIndex = cards.value.findIndex(c => c.name === editingCard.value.name)
   if (cardIndex !== -1) {
-    cards.value[cardIndex] = {
-      name: CardName.value,
-      value: CardQuestion.value,
-    }
+    cards.value = cards.value.map((c, i) =>
+      i === cardIndex ? { name: CardName.value, value: CardQuestion.value, responseCard: CardResponse.value } : c
+    );
   }
 
   // Envoi de la mise à jour au Service Worker pour qu'il mette à jour le cache
@@ -104,8 +124,10 @@ const PutCards = () => {
       data: {
         originalName: editingCard.value.name,  // Nom original à mettre à jour
         newName: CardName.value, // Nouveau nom// Options mises à jour
-        originalQuestion: editingCard.value.name,
+        originalQuestion: editingCard.value.value,
         newQuestion: CardQuestion.value,
+        originalResponse: editingCard.value.responseCard,
+        newResponse: CardResponse.value,
       }
     })
   }
@@ -115,6 +137,7 @@ const PutCards = () => {
   editingCard.value = null
   CardName.value = ''
   CardQuestion.value = ''
+  CardResponse.value = ''
 }
 
 // Fonction pour annuler l'édition
@@ -123,6 +146,7 @@ const cancelEdit = () => {
   editingCard.value = null
   CardName.value = ''
   CardQuestion.value = ''
+  CardResponse.value = ''
 }
 
 // Fonction pour supprimer une carte
@@ -194,6 +218,14 @@ onMounted(() => {
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
           />
+          <label for="cardResponse" class="block text-sm font-medium text-gray-700">Réponse</label>
+          <input
+            id="cardResponse"
+            v-model="CardResponse"
+            type="text"
+            required
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          />
         </div>
 
         <div class="flex justify-end">
@@ -209,8 +241,8 @@ onMounted(() => {
         <div v-for="(card, index) in cards" :key="index" class="bg-gray-100 p-4 rounded-lg flex gap-4">
           <div class="flex items-center gap-4">
             <!-- Afficher le nom de la carte si on n'est pas en mode édition -->
-            <h2 v-if="!isEditable || editingCard?.name !== card.name" class="text-xl font-semibold text-gray-900">
-              {{ card.name }} {{card.value}}
+            <h2 v-if="editingCard?.name !== card.name" class="text-xl font-semibold text-gray-900">
+              <a href="#" @click.prevent="modalVisible(card.value, card.name)">{{ card.name }}</a>
             </h2>
 
             <!-- Formulaire d'édition de cartes -->
@@ -223,6 +255,12 @@ onMounted(() => {
               />
               <input
                 v-model="CardQuestion"
+                type="text"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              />
+              <input
+                v-model="CardResponse"
                 type="text"
                 required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
@@ -245,6 +283,7 @@ onMounted(() => {
         <p>Aucune cartes créée pour le moment.</p>
       </div>
     </div>
+    <modalMemory :open="isModalOpen" :question="selectedQuestion" :nameCard="selectedNameCard" @close="closeModal" />
   </section>
 </template>
 

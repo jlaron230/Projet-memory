@@ -1,28 +1,34 @@
 
 export const CACHE_CARDS = 'cards-v1';
 
-export const createCard = async (name, options, value) => {
-  const cardData = JSON.stringify({ name, options, value });
+export const createCard = async (name, options, value, response) => {
+  const cardData = JSON.stringify({ name, options, value, responseCard: response });
   const request = new Request(`/cards/${name}`);
-  const response = new Response(cardData, { status: 200, statusText: 'success' });
+  const responseObj = new Response(cardData, { status: 200, statusText: 'success' });
 
   const cache = await caches.open(CACHE_CARDS);
-  await cache.put(request, response);
+  await cache.put(request, responseObj);
   console.log(`Carte ${name} mise en cache`);
 };
 
-export const updateCard = async (originalName, newName, options, newQuestion, originalQuestion) => {
-  const cardData = JSON.stringify({ name: newName, options, newQuestion, originalQuestion });
+export const updateCard = async (originalName, newName, options, newQuestion, originalQuestion, newResponse, originalResponse) => {
+  const cardData = JSON.stringify({ name: newName, options, value: newQuestion, responseCard: newResponse });
+
   const oldRequest = new Request(`/cards/${originalName}`);
   const newRequest = new Request(`/cards/${newName}`);
-  const oldRequestQuestion = new Request(`/cards/${originalQuestion}`);
-  const response = new Response(cardData, { status: 200, statusText: 'success' });
+  const responseObj = new Response(cardData, { status: 200, statusText: 'success' });
 
   const cache = await caches.open(CACHE_CARDS);
-  await cache.delete(oldRequest, oldRequestQuestion);
-  await cache.put(newRequest, response);
-  console.log(`Carte ${newName} et ${newQuestion} mise à jour dans le cache`);
+
+  if (originalName !== newName) {
+    await cache.delete(oldRequest);
+  }
+
+  await cache.put(newRequest, responseObj);
+  console.log(`Carte ${newName} mise à jour dans le cache avec question : ${newQuestion} et réponse : ${newResponse}`);
 };
+
+
 
 export const deleteCard = async (CardName) => {
   const request = new Request(`/cards/${CardName}`);
