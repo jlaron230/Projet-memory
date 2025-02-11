@@ -12,20 +12,17 @@
       <nav>
         <ul class="flex gap-4">
           <li>
-            <router-link to="/" class="!text-white text-lg hover:text-blue-300 transition">
-              Accueil
-            </router-link>
-          </li>
+
           <li>
-            <router-link
-              to="/categorie"
-              class="!text-white text-lg hover:text-blue-300 transition"
-              @click="reloadCategory"
-            >
-              Catégorie
-            </router-link>
-          </li>
-          <li>
+            <li>
+              <router-link
+                to="/categorie"
+                class="!text-white text-lg hover:text-blue-300 transition"
+                @click="console.log('Catégorie cliquée')"
+              >
+                Catégorie
+              </router-link>
+            </li>
             <router-link to="/theme" class="!text-white text-lg hover:text-blue-300 transition">
               Mes theme
             </router-link>
