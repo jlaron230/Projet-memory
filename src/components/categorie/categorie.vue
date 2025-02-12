@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import buttondelete from '@/components/button/button-delete.vue'
 import { PencilIcon } from '@heroicons/vue/20/solid'
+import CardTheme from '@/views/CardTheme.vue'
+import Theme from '@/views/Theme.vue'
 
 const categoryName = ref<string>('')  // Pour la création de la catégorie
 const categories = ref<any[]>([]) // Liste des catégories
@@ -193,7 +195,11 @@ onMounted(() => {
           <div class="flex items-center gap-4">
             <!-- Afficher le nom de la catégorie si on n'est pas en mode édition -->
             <h2 v-if="!isEditable || editingCategory?.name !== category.name" class="text-xl font-semibold text-gray-900">
+              <router-link
+              :to="{ name: 'Theme', params: { categoryId: category.name }}"
+              class="cursor-pointer text-xl font-semibold text-gray-900 hover:text-blue-600">
               {{ category.name }}
+              </router-link>
             </h2>
 
             <!-- Formulaire d'édition de catégorie -->
