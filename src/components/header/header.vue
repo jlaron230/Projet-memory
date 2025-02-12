@@ -11,7 +11,7 @@
       <h1 class="text-3xl font-bold">Projet Memory</h1>
       <nav>
         <ul class="flex gap-4">
-          <li>
+          <li> </li>
 
           <li>
             <li>

@@ -8,7 +8,7 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 const isView = ref(false)
 const isVisible = computed(() => props.open)
 
-const props = defineProps<{ open: boolean, question: string | null, nameCard: string | null }>()
+const props = defineProps<{ open: boolean, question: string | null, nameCard: string | null, responseC: string | null }>()
 const emit = defineEmits(['close'])
 
 const isViewResponse = () => {
@@ -40,7 +40,7 @@ const isViewResponse = () => {
                     <ButtonView @click.prevent="isViewResponse" />
                     </div>
                     <div v-if="isView" class="mt-2">
-                      <p class="text-sm text-gray-500">{{props.question}}</p>
+                      <p class="text-sm text-gray-500">{{props.responseC}}</p>
                     </div>
                   </div>
                 </div>

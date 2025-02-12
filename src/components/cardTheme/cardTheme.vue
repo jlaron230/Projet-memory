@@ -13,18 +13,21 @@ const editingCard = ref<any | null>(null)  // carte en édition
 const isModalOpen = ref(false)
 const selectedQuestion = ref<string | null>(null);
 const selectedNameCard = ref<string | null>(null);
+const selectedResponseCard = ref<string | null>(null);
 
 // Fonction pour activer et désactiver la modal
-const modalVisible = (question: string, nameCard: string,) => {
+const modalVisible = (question: string, nameCard: string, responseC: string) => {
 isModalOpen.value = true
   selectedQuestion.value = question;
   selectedNameCard.value = nameCard;
+  selectedResponseCard.value = responseC;
 }
 
 const closeModal = () => {
   isModalOpen.value = false
   selectedQuestion.value = null;
   selectedNameCard.value = null;
+  selectedResponseCard.value = null
 }
 
 // Fonction pour activer l'édition
@@ -242,7 +245,7 @@ onMounted(() => {
           <div class="flex items-center gap-4">
             <!-- Afficher le nom de la carte si on n'est pas en mode édition -->
             <h2 v-if="editingCard?.name !== card.name" class="text-xl font-semibold text-gray-900">
-              <a href="#" @click.prevent="modalVisible(card.value, card.name)">{{ card.name }}</a>
+              <a href="#" @click.prevent="modalVisible(card.value, card.name, card.responseCard)">{{ card.name }}</a>
             </h2>
 
             <!-- Formulaire d'édition de cartes -->
@@ -283,7 +286,7 @@ onMounted(() => {
         <p>Aucune cartes créée pour le moment.</p>
       </div>
     </div>
-    <modalMemory :open="isModalOpen" :question="selectedQuestion" :nameCard="selectedNameCard" @close="closeModal" />
+    <modalMemory :open="isModalOpen" :question="selectedQuestion" :nameCard="selectedNameCard" :responseC="selectedResponseCard" @close="closeModal" />
   </section>
 </template>
 
