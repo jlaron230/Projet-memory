@@ -1,29 +1,41 @@
 <script setup lang="ts">
-import {ref} from 'vue'
+import { ref, onMounted } from 'vue';
+const themes = ref<{ name: string; description: string }[]>([]);
+const themeName = ref('');
+const themeDescription = ref('');
 
-const themes = ref<{name:string; description:string} []>([])
-const themeName = ref<string>('');
-const themeDescription = ref<string>('');
+const addTheme = () => {
+  if (!themeName.value.trim() || !themeDescription.value.trim()) return;
 
-const addTheme = (newTheme:{name:string ; description: string ; }) =>{
-  themes.value.push (newTheme)
-  localstorage.setItem('themes',JSON.stringify(themes.value))
-}
-//lire les theme dans le localstorage qui va ettre afficher sous forme de tableau
-OnMounted(() =>{
-  const SaveTheme = JSON.parse(localStorage.getItem('themes') ||' []');
-  theme.value = SaveTheme;
-})
+  const newTheme = {
+    name: themeName.value,
+    description: themeDescription.value
+  };
 
+  themes.value.push(newTheme);
+  localStorage.setItem('themes', JSON.stringify([...themes.value]));
+
+  // Réinitialisation des champs après l'ajout
+  themeName.value = '';
+  themeDescription.value = '';
+};
+
+// Lire les thèmes enregistrés dans le localStorage au montage du composant
+onMounted(() => {
+  const savedThemes = JSON.parse(localStorage.getItem('themes') || '[]');
+  if (Array.isArray(savedThemes)) {
+    themes.value = savedThemes;
+  }
+});
 </script>
 
 <template>
   <section class="bg-white shadow-sm">
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex place-content-between">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex justify-between">
       <h1 class="text-3xl font-bold tracking-tight text-gray-900">Mes Thèmes</h1>
     </div>
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <form @submit.prevent="addTheme({ name: themeName.value, description: themeDescription.value })">
+      <form @submit.prevent="addTheme">
         <label for="themeName" class="block text-sm font-bold tracking-tight text-gray-900">
           Nom du thème :
         </label>
@@ -53,6 +65,13 @@ OnMounted(() =>{
           </button>
         </div>
       </form>
+
+      <!-- Affichage des thèmes enregistrés -->
+      <ul class="mt-6">
+        <li v-for="(theme, index) in themes" :key="index" class="p-4 bg-gray-100 rounded-md mb-2">
+          <strong>{{ theme.name }}</strong>: {{ theme.description }}
+        </li>
+      </ul>
     </div>
   </section>
-</template>’
+</template>

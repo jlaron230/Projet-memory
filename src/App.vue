@@ -2,6 +2,8 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './views/Accueil.vue'
+import CreateTheme from './components/theme/createTheme.vue';
+import ThemeList from './components/theme/themeList.vue';
 </script>
 
 <template>
@@ -17,7 +19,9 @@ import HelloWorld from './views/Accueil.vue'
       </nav>
     </div>
   </header>
-  <RouterView />
+  
+  <CreateTheme :themeToEdit="themeToEdit" @save="saveTheme" />
+  <ThemeList :themes="themes" @edit="editTheme" @delete="deleteTheme" />
 </template>
 
 <style scoped>
