@@ -1,6 +1,7 @@
 import { cacheAssets, cleanUpOldCaches, putInCache } from './cache.js'
 import { createCategory, deleteCategory, updateCategory, CACHE_CATEGORIES } from './categories.js'
 import { createCard, deleteCard, updateCard } from './cards.js'
+import { createTheme, updateTheme, deleteTheme} from './theme.js'
 // Définir le cache pour les assets
 const CACHE_ASSETS = 'assets-v1';
 
@@ -34,6 +35,21 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'DELETE_CATEGORY') {
     const { categoryName } = event.data;
     deleteCategory(categoryName);
+  }
+
+  if (event.data && event.data.type === 'CREATE_THEME') {
+    const { name, description } = event.data.data;
+    createTheme(name, description);
+  }
+
+  if (event.data && event.data.type === 'UPDATE_THEME') {
+    const { originalName, newName, newDescription, originalDescription } = event.data.data;
+    updateTheme(originalName, newName, newDescription, originalDescription);
+  }
+
+  if (event.data && event.data.type === 'DELETE_THEME') {
+    const { name } = event.data;
+    deleteTheme(name);
   }
 
   if (event.data && event.data.type === 'CREATE_CARD') {
