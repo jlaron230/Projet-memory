@@ -38,33 +38,33 @@ self.addEventListener('message', (event) => {
   }
 
   if (event.data && event.data.type === 'CREATE_THEME') {
-    const { name, description } = event.data.data;
-    createTheme(name, description);
+    const { categoryId, name, description } = event.data.data;
+    createTheme(categoryId, name, description);
   }
 
   if (event.data && event.data.type === 'UPDATE_THEME') {
-    const { originalName, newName, newDescription, originalDescription } = event.data.data;
-    updateTheme(originalName, newName, newDescription, originalDescription);
+    const { categoryId, originalName, newName, newDescription, originalDescription } = event.data.data;
+    updateTheme(categoryId, originalName, newName, newDescription, originalDescription);
   }
 
   if (event.data && event.data.type === 'DELETE_THEME') {
-    const { name } = event.data;
-    deleteTheme(name);
+    const {categoryId, name } = event.data;
+    deleteTheme(categoryId, name);
   }
 
   if (event.data && event.data.type === 'CREATE_CARD') {
-    const { name, options, value, response } = event.data.data;
-    createCard(name, options, value, response);
+    const { themeId, name, options, value, responseCard } = event.data.data;
+    createCard( themeId, name, options, value, responseCard);
   }
 
   if (event.data && event.data.type === 'UPDATE_CARD') {
-    const { originalName, newName, options, newQuestion, originalQuestion, originalResponse, newResponse } = event.data.data;
-    updateCard(originalName, newName, options, newQuestion, originalQuestion, newResponse, originalResponse);
+    const { themeId, originalName, newName, options, newQuestion, originalQuestion, originalResponse, newResponse } = event.data.data;
+    updateCard( themeId, originalName, newName, options, newQuestion, originalQuestion, newResponse, originalResponse);
   }
 
   if (event.data && event.data.type === 'DELETE_CARD') {
-    const { cardName } = event.data;
-    deleteCard(cardName);
+    const { themeId, cardName } = event.data;
+    deleteCard( themeId, cardName);
   }
 });
 

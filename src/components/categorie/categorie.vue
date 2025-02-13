@@ -194,6 +194,7 @@ onMounted(() => {
         <div v-for="(category, index) in categories" :key="index" class="bg-gray-100 p-4 rounded-lg flex gap-4">
           <div class="flex items-center gap-4">
             <!-- Afficher le nom de la catégorie si on n'est pas en mode édition -->
+            <div>
             <h2 v-if="!isEditable || editingCategory?.name !== category.name" class="text-xl font-semibold text-gray-900">
               <router-link
               :to="{ name: 'Theme', params: { categoryId: category.name }}"
@@ -201,7 +202,7 @@ onMounted(() => {
               {{ category.name }}
               </router-link>
             </h2>
-
+            </div>
             <!-- Formulaire d'édition de catégorie -->
             <form v-if="isEditable && editingCategory?.name === category.name" @submit.prevent="PutCategories" class="mt-5 flex flex-col gap-4">
               <input
@@ -210,18 +211,19 @@ onMounted(() => {
                 required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               />
+              <div class="flex gap-4">
               <button type="submit" class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
                 Sauvegarder
               </button>
+              <!-- Bouton de suppression pour chaque catégorie -->
+              <buttondelete @click.prevent="DeleteCategories(category.name)" />
+              </div>
             </form>
 
             <button @click.prevent="toggleEdit(category)">
               <PencilIcon class="px-3 py-2 w-[3rem]" />
             </button>
           </div>
-
-          <!-- Bouton de suppression pour chaque catégorie -->
-          <buttondelete @click.prevent="DeleteCategories(category.name)" />
         </div>
       </div>
       <div v-else class="text-center text-gray-500">
