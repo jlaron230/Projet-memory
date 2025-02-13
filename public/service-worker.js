@@ -1,6 +1,6 @@
 import { cacheAssets, cleanUpOldCaches, putInCache } from './cache.js'
 import { createCategory, deleteCategory, updateCategory, CACHE_CATEGORIES } from './categories.js'
-import { createCard, deleteCard, updateCard } from './cards.js'
+import { createCard, deleteCard, updateCard,  getDailyCards, validateCard } from './cards.js'
 import { createTheme, updateTheme, deleteTheme} from './theme.js'
 // Définir le cache pour les assets
 const CACHE_ASSETS = 'assets-v1';
@@ -66,6 +66,16 @@ self.addEventListener('message', (event) => {
     const { themeId, cardName } = event.data;
     deleteCard( themeId, cardName);
   }
+
+  if (event.data && event.data.type === 'GET_DAILY_CARDS') {
+    getDailyCards().then(cards => event.ports[0].postMessage(cards));
+  }
+
+  if (event.data && event.data.type === 'VALIDATE_CARD') { // Correction ici
+    const { themeId, name } = event.data.data;
+    validateCard(themeId, name);
+  }
+
 });
 
 // Gestion des requêtes fetch

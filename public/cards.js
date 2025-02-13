@@ -9,6 +9,11 @@ export const createCard = async (themeId, name, options, value, CardResponse ,le
   const responseObj = new Response(cardData, { status: 200, statusText: 'success' });
 
   const cache = await caches.open(CACHE_CARDS);
+  const existingCard = await cache.match(request);
+  if (existingCard) {
+    console.warn(`La carte ${name} existe déjà dans le cache, ajout annulé.`);
+    return;
+  }
   await cache.put(request, responseObj);
   console.log(`Carte ${name} mise en cache`);
 };
@@ -43,7 +48,7 @@ export const deleteCard = async (themeId, CardName) => {
   }
 };
 
-export const GetDailyCards = async () => {
+export const getDailyCards = async () => {
   const cache = await caches.open(CACHE_CARDS);
   const requests = await caches.keys();
   const cards = await Promise.all(
