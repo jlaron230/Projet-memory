@@ -8,7 +8,7 @@ const themeName = ref<string>('')
 const themeDescription = ref<string>('')
 const isEditable = ref(false)
 const editingTheme = ref<any | null>(null)
-const props = defineProps<{themeId: string}>();
+const props = defineProps<{ themeId: string }>()
 
 // Fonction pour activer l'édition
 const toggleEdit = (theme: any) => {
@@ -21,7 +21,7 @@ const toggleEdit = (theme: any) => {
 
 // Filtrage des thèmes en fonction de la catégorie sélectionnée
 const filteredThemes = computed(() => {
-  return themes.value.filter((theme) => theme.themeId == props.themeId);
+  return themes.value.filter((theme) => theme.themeId == props.themeId)
 })
 
 // Fonction pour créer un nouveau thème
@@ -115,7 +115,7 @@ const PutTheme = () => {
         newName: themeName.value, // Nouveau nom// Options mises à jour
         newDescription: themeDescription.value,
         originalDescription: editingTheme.value.description,
-        themeId: props.themeId,
+        themeId: props.themeId
       }
     })
   }
@@ -147,7 +147,11 @@ const DeleteTheme = async (themeName: string) => {
           break
         }
       }
-      navigator.serviceWorker?.controller?.postMessage({ type: 'DELETE_THEME', name: themeName, themeId: props.themeId })
+      navigator.serviceWorker?.controller?.postMessage({
+        type: 'DELETE_THEME',
+        name: themeName,
+        themeId: props.themeId
+      })
     } catch (error) {
       console.error('Erreur lors de la suppression du cache', error)
     }
@@ -174,7 +178,8 @@ onMounted(() => {
 <template>
   <section class="bg-white shadow-sm">
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex place-content-between">
-      <h1 class="text-3xl font-bold tracking-tight text-gray-900">Thèmes de la catégorie {{ themeId }}</h1>
+      <h1 class="text-3xl font-bold tracking-tight text-gray-900">Thèmes de la catégorie {{ themeId
+        }}</h1>
     </div>
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <form @submit.prevent="Createtheme">
@@ -188,7 +193,8 @@ onMounted(() => {
           required
           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
         />
-        <label for="themeDescription" class="block text-sm font-bold tracking-tight text-gray-900 mt-4">
+        <label for="themeDescription"
+               class="block text-sm font-bold tracking-tight text-gray-900 mt-4">
           Description du thème :
         </label>
         <textarea
@@ -209,10 +215,12 @@ onMounted(() => {
 
       <!-- Liste des catégories -->
       <div v-if="filteredThemes.length > 0" class="space-y-6">
-        <div v-for="(theme, index) in filteredThemes" :key="index" class="bg-gray-100 p-4 rounded-lg flex gap-4">
+        <div v-for="(theme, index) in filteredThemes" :key="index"
+             class="bg-gray-100 p-4 rounded-lg flex gap-4">
           <div class="flex items-center gap-4">
             <!-- Afficher le nom de la catégorie si on n'est pas en mode édition -->
-            <h2 v-if="!isEditable || editingTheme?.name !== theme.name" class="text-xl font-semibold text-gray-900">
+            <h2 v-if="!isEditable || editingTheme?.name !== theme.name"
+                class="text-xl font-semibold text-gray-900">
               <router-link
                 :to="{ name: 'CardTheme', params: { themeId: theme.name }}"
                 class="cursor-pointer text-xl font-semibold text-gray-900 hover:text-blue-600">
@@ -224,7 +232,8 @@ onMounted(() => {
             </div>
 
             <!-- Formulaire d'édition de catégorie -->
-            <form v-if="isEditable && editingTheme?.name === theme.name" @submit.prevent="PutTheme" class="mt-5 flex flex-col gap-4">
+            <form v-if="isEditable && editingTheme?.name === theme.name" @submit.prevent="PutTheme"
+                  class="mt-5 flex flex-col gap-4">
               <input
                 v-model="themeName"
                 type="text"
@@ -232,11 +241,12 @@ onMounted(() => {
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               />
               <div class="flex gap-4">
-              <button type="submit" class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
-                Sauvegarder
-              </button>
-              <!-- Bouton de suppression pour chaque catégorie -->
-              <buttondelete @click.prevent="DeleteTheme(theme.name)" />
+                <button type="submit"
+                        class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
+                  Sauvegarder
+                </button>
+                <!-- Bouton de suppression pour chaque catégorie -->
+                <buttondelete @click.prevent="DeleteTheme(theme.name)" />
               </div>
             </form>
 

@@ -15,6 +15,7 @@ const selectedQuestion = ref<string | null>(null)
 const selectedNameCard = ref<string | null>(null)
 const selectedResponseCard = ref<string | null>(null)
 const props = defineProps<{themeId: string}>();
+const dailyNewCardLimit = 3;
 
 // Fonction pour activer et désactiver la modal
 const modalVisible = (question: string, nameCard: string, responseC: string) => {
@@ -35,6 +36,13 @@ const closeModal = () => {
   selectedNameCard.value = null
   selectedResponseCard.value = null
 }
+
+const sortedCards = computed(() => {
+  return cards.value
+  .filter((card) => card.themeId == props.themeId)
+  .sort((a, b) => a.level - b.level)
+    .slice(0, dailyNewCardLimit)
+})
 
 // Fonction pour activer l'édition
 const toggleEdit = (cards: any) => {
@@ -58,6 +66,7 @@ const CreateCards = () => {
     value: CardQuestion.value,
     responseCard: CardResponse.value,
     themeId: props.themeId,
+    level: 1,
   }
 
   // Envoi de la carte au Service Worker
@@ -78,6 +87,12 @@ const CreateCards = () => {
   CardName.value = ''
   CardQuestion.value = ''
   CardResponse.value = ''
+}
+
+const validateCard = (card: any) => {
+  if(card.level == 5) {
+    card.level++;
+  }
 }
 
 // Fonction pour récupérer les cartes depuis le cache
@@ -266,7 +281,7 @@ onMounted(() => {
           :key="index"
           class="bg-gray-100 p-4 rounded-lg flex gap-4"
            >
-          <div class="flex items-center gap-4">
+          <div v-if="sortedCards.length > 0"  class="flex items-center gap-4">
             <!-- Afficher le nom de la carte si on n'est pas en mode édition -->
             <h2 v-if="editingCard?.name !== card.name" class="text-xl font-semibold text-gray-900">
               <a href="#" @click.prevent="modalVisible(card.value, card.name, card.responseCard)">{{
@@ -313,6 +328,8 @@ onMounted(() => {
             <button @click.prevent="toggleEdit(card)">
               <PencilIcon class="px-3 py-2 w-[3rem]" />
             </button>
+            <span class="text-sm text-gray-500">Niveau: {{ card.level }}</span>
+            <button @click="validateCard(card)" class="bg-green-500 text-white px-2 py-1 rounded-md">Valider</button>
           </div>
         </div>
       </div>
