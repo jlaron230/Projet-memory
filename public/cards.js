@@ -1,9 +1,9 @@
 
 export const CACHE_CARDS = 'cards-v1';
 
-export const createCard = async (name, options, value, response) => {
-  const cardData = JSON.stringify({ name, options, value, responseCard: response });
-  const request = new Request(`/cards/${name}`);
+export const createCard = async (themeId, name, options, value, CardResponse) => {
+  const cardData = JSON.stringify({themeId, name, options, value, responseCard: CardResponse });
+  const request = new Request(`/cards/${themeId}/${name}`);
   const responseObj = new Response(cardData, { status: 200, statusText: 'success' });
 
   const cache = await caches.open(CACHE_CARDS);
@@ -11,11 +11,11 @@ export const createCard = async (name, options, value, response) => {
   console.log(`Carte ${name} mise en cache`);
 };
 
-export const updateCard = async (originalName, newName, options, newQuestion, originalQuestion, newResponse, originalResponse) => {
-  const cardData = JSON.stringify({ name: newName, options, value: newQuestion, responseCard: newResponse });
+export const updateCard = async (themeId, originalName, newName, options, newQuestion, originalQuestion, newResponse, originalResponse) => {
+  const cardData = JSON.stringify({themeId, name: newName, options, value: newQuestion, responseCard: newResponse });
 
-  const oldRequest = new Request(`/cards/${originalName}`);
-  const newRequest = new Request(`/cards/${newName}`);
+  const oldRequest = new Request(`/cards/${themeId}/${originalName}`);
+  const newRequest = new Request(`/cards/${themeId}/${newName}`);
   const responseObj = new Response(cardData, { status: 200, statusText: 'success' });
 
   const cache = await caches.open(CACHE_CARDS);
@@ -30,9 +30,9 @@ export const updateCard = async (originalName, newName, options, newQuestion, or
 
 
 
-export const deleteCard = async (CardName) => {
-  const request = new Request(`/cards/${CardName}`);
-  const cache = await caches.open('cards-v1');
+export const deleteCard = async (themeId, CardName) => {
+  const request = new Request(`/cards/${themeId}/${CardName}`);
+  const cache = await caches.open(CACHE_CARDS);
   const deleted = await cache.delete(request);
   if (deleted) {
     console.log(`Carte ${CardName} supprimée du cache`);

@@ -26,9 +26,10 @@ const router = createRouter({
       component: Categorie,
     },
     {
-      path: '/CardTheme',
+      path: '/CardTheme/:themeId',
       name: 'CardTheme',
       component: CardTheme,
+      props: true,
     },
     {
       path: '/category/:categoryId',
