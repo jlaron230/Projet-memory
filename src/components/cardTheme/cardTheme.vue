@@ -15,6 +15,7 @@ const selectedQuestion = ref<string | null>(null)
 const selectedNameCard = ref<string | null>(null)
 const selectedResponseCard = ref<string | null>(null)
 const props = defineProps<{themeId: string}>();
+const dailyNewCardLimit = 3;
 
 // Fonction pour activer et désactiver la modal
 const modalVisible = (question: string, nameCard: string, responseC: string) => {
@@ -35,6 +36,13 @@ const closeModal = () => {
   selectedNameCard.value = null
   selectedResponseCard.value = null
 }
+
+const sortedCards = computed(() => {
+  return cards.value
+  .filter((card) => card.themeId == props.themeId)
+  .sort((a, b) => a.level - b.level)
+    .slice(0, dailyNewCardLimit)
+})
 
 // Fonction pour activer l'édition
 const toggleEdit = (cards: any) => {
@@ -58,6 +66,7 @@ const CreateCards = () => {
     value: CardQuestion.value,
     responseCard: CardResponse.value,
     themeId: props.themeId,
+    level: 1,
   }
 
   // Envoi de la carte au Service Worker
@@ -80,38 +89,78 @@ const CreateCards = () => {
   CardResponse.value = ''
 }
 
+const validateCard = async (card: any) => {
+  if (card.level < 5) {
+    card.level++;
+    card.lastReviewed = new Date().toISOString().split('T')[0]; // Ajouter la date de révision
+    await updateCardInCache(card);
+
+    // Mettre à jour la liste des cartes en remplaçant la carte modifiée
+    const index = cards.value.findIndex(c => c.name === card.name && c.themeId === card.themeId);
+    if (index !== -1) {
+      cards.value[index] = { ...card };
+    }
+  } else {
+    console.log("Carte mémorisée complètement !");
+  }
+};
+
+const updateCardInCache = async (updatedCard: any) => {
+  if ('caches' in window) {
+    try {
+      const cache = await caches.open('cards-v1');
+      const requestUrl = `/cards/${encodeURIComponent(updatedCard.themeId)}/${encodeURIComponent(updatedCard.name)}`;
+
+      // Supprimer l'ancienne version de la carte
+      const requests = await cache.keys();
+      for (const request of requests) {
+        if (new URL(request.url).pathname === requestUrl) {
+          await cache.delete(request);
+        }
+      }
+
+      // Ajouter la version mise à jour
+      await cache.put(new Request(requestUrl), new Response(JSON.stringify(updatedCard)));
+      console.log("Carte mise à jour dans le cache :", updatedCard);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du cache", error);
+    }
+  }
+};
+
 // Fonction pour récupérer les cartes depuis le cache
 const getCardsFromCache = async () => {
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-    const cache = await caches.open('cards-v1')
-    const cachedCards = []
+    const cache = await caches.open('cards-v1');
+    const cachedCards = [];
 
-    const cacheKeys = await cache.keys()
-    console.log('Clés du cache :', cacheKeys)
+    const cacheKeys = await cache.keys();
+    console.log('Clés du cache :', cacheKeys);
 
     for (const request of cacheKeys) {
-      const requestUrl = new URL(request.url)
-
+      const requestUrl = new URL(request.url);
       if (requestUrl.pathname.startsWith('/cards/')) {
-        // Vérifie bien que les cartes sont dans le bon cache
         try {
-          const response = await cache.match(request)
-
+          const response = await cache.match(request);
           if (response && response.ok) {
-            const cardData = await response.json()
-            console.log('Carte récupérée depuis le cache :', cardData)
-            cachedCards.push(cardData)
+            const cardData = await response.json();
+            cachedCards.push(cardData);
           }
-          } catch (error) {
-          console.error('Erreur lors de la récupération de la carte du cache :', error)
+        } catch (error) {
+          console.error('Erreur lors de la récupération de la carte du cache :', error);
         }
       }
     }
 
-    cards.value = cachedCards.filter(theme => theme.themeId === props.themeId)
-    console.log('cartes après récupération du cache :', cards.value)
+    // Filtrer correctement les cartes pour éviter les doublons
+    const uniqueCards = cachedCards.filter((card, index, self) =>
+      index === self.findIndex(c => c.name === card.name && c.themeId === card.themeId)
+    );
+
+    cards.value = uniqueCards;
+    console.log('Cartes après récupération du cache :', cards.value);
   }
-}
+};
 
 // Fonction pour mettre à jour une carte
 const PutCards = () => {
@@ -134,6 +183,8 @@ const PutCards = () => {
         : c,
     )
   }
+
+  updateCardInCache(cards.value[cardIndex]);
 
   // Envoi de la mise à jour au Service Worker pour qu'il mette à jour le cache
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
@@ -266,7 +317,7 @@ onMounted(() => {
           :key="index"
           class="bg-gray-100 p-4 rounded-lg flex gap-4"
            >
-          <div class="flex items-center gap-4">
+          <div v-if="sortedCards.length > 0"  class="flex items-center gap-4">
             <!-- Afficher le nom de la carte si on n'est pas en mode édition -->
             <h2 v-if="editingCard?.name !== card.name" class="text-xl font-semibold text-gray-900">
               <a href="#" @click.prevent="modalVisible(card.value, card.name, card.responseCard)">{{
@@ -313,6 +364,8 @@ onMounted(() => {
             <button @click.prevent="toggleEdit(card)">
               <PencilIcon class="px-3 py-2 w-[3rem]" />
             </button>
+            <span class="text-sm text-gray-500">Niveau: {{ card.level }}</span>
+            <button @click="validateCard(card)" class="bg-green-500 text-white px-2 py-1 rounded-md">Valider</button>
           </div>
         </div>
       </div>
