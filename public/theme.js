@@ -35,3 +35,4 @@ export const deleteTheme = async (categoryId, themeName) => {
     console.warn(`Aucun thème trouvée pour ${themeName} dans le cache`);
   }
 };
+
