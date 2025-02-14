@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import buttondelete from '@/components/button/button-delete.vue'
 import { PencilIcon } from '@heroicons/vue/20/solid'
 import modalMemory from '@/components/cardTheme/modalMemory.vue'
@@ -14,8 +14,49 @@ const isModalOpen = ref(false)
 const selectedQuestion = ref<string | null>(null)
 const selectedNameCard = ref<string | null>(null)
 const selectedResponseCard = ref<string | null>(null)
-const props = defineProps<{themeId: string}>();
-const dailyNewCardLimit = 3;
+const props = defineProps<{ themeId: string }>()
+const dailyNewCardLimit = ref<number>(3)
+const totalReviewedToday = ref<number>(0)
+
+// Fonction pour sauvegarder la limite personnalisée dans le cache
+const saveLimitToCache = async () => {
+  if ('caches' in window) {
+    try {
+      const cache = await caches.open('settings-v1')
+      await cache.put('dailyNewCardLimit', new Response(JSON.stringify(dailyNewCardLimit.value)))
+      console.log('Limite quotidienne sauvegardée :', dailyNewCardLimit.value)
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde de la limite quotidienne', error)
+    }
+  }
+}
+
+// Fonction pour récupérer la limite personnalisée depuis le cache
+const loadLimitFromCache = async () => {
+  if ('caches' in window) {
+    try {
+      const cache = await caches.open('settings-v1')
+      const response = await cache.match('dailyNewCardLimit')
+      if (response) {
+        const limit = await response.json()
+        dailyNewCardLimit.value = limit
+        console.log('Limite quotidienne chargée :', limit)
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de la limite quotidienne', error)
+    }
+  }
+}
+
+watch(dailyNewCardLimit, (newLimit) => {
+  saveLimitToCache()
+})
+
+// Fonction pour suivre le nombre total de cartes révisées aujourd'hui
+const updateTotalReviewedToday = () => {
+  const today = new Date().toISOString().split('T')[0]
+  totalReviewedToday.value = cards.value.filter((card) => card.lastReviewed === today).length
+}
 
 // Fonction pour activer et désactiver la modal
 const modalVisible = (question: string, nameCard: string, responseC: string) => {
@@ -27,7 +68,11 @@ const modalVisible = (question: string, nameCard: string, responseC: string) => 
 
 // Filtrage des thèmes en fonction de la catégorie sélectionnée
 const filteredThemes = computed(() => {
-  return cards.value.filter((card) => card.themeId == props.themeId);
+  const today = new Date().toISOString().split('T')[0]
+  return cards.value.filter(
+    (card) =>
+      card.themeId == props.themeId && (!card.nextReviewDate || card.nextReviewDate <= today),
+  )
 })
 
 const closeModal = () => {
@@ -39,9 +84,9 @@ const closeModal = () => {
 
 const sortedCards = computed(() => {
   return cards.value
-  .filter((card) => card.themeId == props.themeId)
-  .sort((a, b) => a.level - b.level)
-    .slice(0, dailyNewCardLimit)
+    .filter((card) => card.themeId === props.themeId)
+    .sort((a, b) => ((a.lastReviewed || '') > (b.lastReviewed || '') ? 1 : -1))
+    .slice(0, dailyNewCardLimit.value)
 })
 
 // Fonction pour activer l'édition
@@ -56,33 +101,41 @@ const toggleEdit = (cards: any) => {
 
 // Fonction pour créer une nouvelle carte
 const CreateCards = () => {
-  if (!CardName.value.trim() && !CardQuestion.value.trim() && !CardResponse.value.trim()) {
+  if (!CardName.value.trim() || !CardQuestion.value.trim() || !CardResponse.value.trim()) {
     alert('Le nom de la carte et la question est requis')
     return
   }
 
-  const cardData = {
-    name: CardName.value,
-    value: CardQuestion.value,
-    responseCard: CardResponse.value,
-    themeId: props.themeId,
-    level: 1,
-  }
-
-  // Envoi de la carte au Service Worker
-  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({
-      type: 'CREATE_CARD',
-      data: cardData,
-    })
-    console.log('Carte envoyée au Service Worker:', cardData)
-
-    // Ajout immédiat de la carte dans la liste
-    cards.value.push(cardData)
+  const today = new Date().toISOString().split('T')[0]
+  const todayCards = cards.value.filter((card) => card.lastReviewed === today).length
+  console.log(todayCards)
+  if (todayCards >= dailyNewCardLimit.value) {
+    alert(`Vous avez atteint la limite de ${dailyNewCardLimit.value} cartes par jour`)
+    return
   } else {
-    console.error('Service Worker non disponible')
-  }
+    const cardData = {
+      name: CardName.value,
+      value: CardQuestion.value,
+      responseCard: CardResponse.value,
+      themeId: props.themeId,
+      level: 1,
+      lastReviewed: null,
+    }
 
+    // ✅ Mettre à jour immédiatement `cards.value` pour afficher la carte
+    cards.value.push(cardData)
+
+    // Envoi de la carte au Service Worker
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'CREATE_CARD',
+        data: cardData,
+      })
+      console.log('Carte envoyée au Service Worker:', cardData)
+    } else {
+      console.error('Service Worker non disponible')
+    }
+  }
   // Réinitialisation des champs du formulaire
   CardName.value = ''
   CardQuestion.value = ''
@@ -90,81 +143,77 @@ const CreateCards = () => {
 }
 
 const validateCard = async (card: any) => {
-  if (card.level < 5) {
-    card.level++;
-    card.lastReviewed = new Date().toISOString().split('T')[0]; // Ajouter la date de révision
-    await updateCardInCache(card);
+  const today = new Date().toISOString().split('T')[0]
 
-    // Mettre à jour la liste des cartes en remplaçant la carte modifiée
-    const index = cards.value.findIndex(c => c.name === card.name && c.themeId === card.themeId);
-    if (index !== -1) {
-      cards.value[index] = { ...card };
-    }
-  } else {
-    console.log("Carte mémorisée complètement !");
+  // Ne pas valider plusieurs fois par jour
+  if (card.lastReviewed === today) {
+    alert("Vous avez déjà révisé cette carte aujourd'hui.")
+    return
   }
-};
+
+  // Délais de révision basés sur le niveau
+  const intervals = [1, 2, 5, 10, 30] // jours d'attente pour chaque niveau
+  card.level = Math.min(card.level + 1, intervals.length - 1)
+
+  // Calculer la prochaine date de révision
+  const nextReview = new Date()
+  nextReview.setDate(nextReview.getDate() + intervals[card.level])
+  card.nextReviewDate = nextReview.toISOString().split('T')[0]
+
+  card.lastReviewed = today // Mettre à jour la date de révision
+  await updateCardInCache(card)
+
+  // Mettre à jour la liste des cartes
+  const index = cards.value.findIndex((c) => c.name === card.name && c.themeId === card.themeId)
+  if (index !== -1) {
+    cards.value[index] = { ...card }
+  }
+  await getCardsFromCache();
+}
 
 const updateCardInCache = async (updatedCard: any) => {
   if ('caches' in window) {
     try {
-      const cache = await caches.open('cards-v1');
-      const requestUrl = `/cards/${encodeURIComponent(updatedCard.themeId)}/${encodeURIComponent(updatedCard.name)}`;
+      const cache = await caches.open('cards-v1')
+      const requestUrl = `/cards/${encodeURIComponent(updatedCard.themeId)}/${encodeURIComponent(updatedCard.name)}`
 
       // Supprimer l'ancienne version de la carte
-      const requests = await cache.keys();
-      for (const request of requests) {
-        if (new URL(request.url).pathname === requestUrl) {
-          await cache.delete(request);
-        }
-      }
+      const existing = await cache.match(requestUrl)
+      if (existing)
+      await cache.put(new Request(requestUrl), new Response(JSON.stringify(updatedCard)))
 
-      // Ajouter la version mise à jour
-      await cache.put(new Request(requestUrl), new Response(JSON.stringify(updatedCard)));
-      console.log("Carte mise à jour dans le cache :", updatedCard);
+      console.log('Carte mise à jour dans le cache :', updatedCard)
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du cache", error);
+      console.error('Erreur lors de la mise à jour du cache', error)
     }
   }
-};
+}
 
 // Fonction pour récupérer les cartes depuis le cache
 const getCardsFromCache = async () => {
-  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-    const cache = await caches.open('cards-v1');
-    const cachedCards = [];
+  if (!('caches' in window)) return
 
-    const cacheKeys = await cache.keys();
-    console.log('Clés du cache :', cacheKeys);
+  try {
+    const cache = await caches.open('cards-v1')
+    const keys = await cache.keys()
+    const themeCards = keys
+      .filter((request) => new URL(request.url).pathname.includes(`/cards/${props.themeId}/`)) // Filtrer directement les cartes par themeId
+      .map(async (request) => {
+        const response = await cache.match(request)
+        return response ? await response.json() : null
+      })
 
-    for (const request of cacheKeys) {
-      const requestUrl = new URL(request.url);
-      if (requestUrl.pathname.startsWith('/cards/')) {
-        try {
-          const response = await cache.match(request);
-          if (response && response.ok) {
-            const cardData = await response.json();
-            cachedCards.push(cardData);
-          }
-        } catch (error) {
-          console.error('Erreur lors de la récupération de la carte du cache :', error);
-        }
-      }
-    }
-
-    // Filtrer correctement les cartes pour éviter les doublons
-    const uniqueCards = cachedCards.filter((card, index, self) =>
-      index === self.findIndex(c => c.name === card.name && c.themeId === card.themeId)
-    );
-
-    cards.value = uniqueCards;
-    console.log('Cartes après récupération du cache :', cards.value);
+    const resolvedCards = await Promise.all(themeCards)
+    cards.value = resolvedCards.filter(card => card !== null)
+    console.log('✅ Cartes récupérées :', cards.value) // Log
+  } catch (error) {
+    console.error('❌ Erreur récupération cache:', error)
   }
-};
+}
 
 // Fonction pour mettre à jour une carte
 const PutCards = () => {
-  if (!CardName.value.trim() && !CardQuestion.value.trim() && !CardResponse.value.trim()) {
+  if (!CardName.value.trim() || !CardQuestion.value.trim() || !CardResponse.value.trim()) {
     alert('Le nom de la carte et la question est requis')
     return
   }
@@ -172,19 +221,15 @@ const PutCards = () => {
   // Mise à jour de la carte dans le tableau local de Vue
   const cardIndex = cards.value.findIndex((c) => c.name === editingCard.value.name)
   if (cardIndex !== -1) {
-    cards.value = cards.value.map((c, i) =>
-      i === cardIndex
-        ? {
-            themeId: props.themeId,
-            name: CardName.value,
-            value: CardQuestion.value,
-            responseCard: CardResponse.value,
-          }
-        : c,
-    )
+    const updatedCard = {
+      ...cards.value[cardIndex], // Garde les anciennes valeurs
+      name: CardName.value,
+      value: CardQuestion.value,
+      responseCard: CardResponse.value,
+    }
+    cards.value[cardIndex] = updatedCard
+    updateCardInCache(updatedCard) // Met à jour dans le cache
   }
-
-  updateCardInCache(cards.value[cardIndex]);
 
   // Envoi de la mise à jour au Service Worker pour qu'il mette à jour le cache
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
@@ -198,20 +243,12 @@ const PutCards = () => {
         originalResponse: editingCard.value.responseCard,
         newResponse: CardResponse.value,
         themeId: props.themeId,
+        level: editingCard.value.level,
       },
     })
   }
 
   // Désactiver l'édition après avoir sauvegardé
-  isEditable.value = false
-  editingCard.value = null
-  CardName.value = ''
-  CardQuestion.value = ''
-  CardResponse.value = ''
-}
-
-// Fonction pour annuler l'édition
-const cancelEdit = () => {
   isEditable.value = false
   editingCard.value = null
   CardName.value = ''
@@ -239,7 +276,11 @@ const DeleteCards = async (cardName: string) => {
           break
         }
       }
-      navigator.serviceWorker?.controller?.postMessage({ type: 'DELETE_CARD', cardName: cardName, themeId: props.themeId })
+      navigator.serviceWorker?.controller?.postMessage({
+        type: 'DELETE_CARD',
+        cardName: cardName,
+        themeId: props.themeId,
+      })
     } catch (error) {
       console.error('Erreur lors de la suppression du cache', error)
     }
@@ -249,10 +290,12 @@ const DeleteCards = async (cardName: string) => {
 onMounted(() => {
   if (navigator.serviceWorker) {
     navigator.serviceWorker.ready
-      .then((registration) => {
+      .then(() => {
         console.log('Service Worker est prêt')
         // Appelle la fonction pour récupérer les cartes à partir du cache ici
         getCardsFromCache()
+        loadLimitFromCache() // Charger la limite personnalisée
+        updateTotalReviewedToday()
       })
       .catch((error) => {
         console.error("Service Worker n'est pas prêt :", error)
@@ -270,6 +313,19 @@ onMounted(() => {
     </div>
     <!-- Formulaire pour créer une carte -->
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <!-- Champ pour modifier la limite quotidienne -->
+      <div class="mb-4">
+        <label for="limit" class="block text-sm font-medium text-gray-700"
+          >Nombre de nouvelles cartes par jour</label
+        >
+        <input
+          id="limit"
+          v-model.number="dailyNewCardLimit"
+          type="number"
+          min="1"
+          class="mt-1 block w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+        />
+      </div>
       <form @submit.prevent="CreateCards" class="mt-5 flex flex-col gap-4">
         <div>
           <label for="cardName" class="block text-sm font-medium text-gray-700"
@@ -316,8 +372,8 @@ onMounted(() => {
           v-for="(card, index) in filteredThemes"
           :key="index"
           class="bg-gray-100 p-4 rounded-lg flex gap-4"
-           >
-          <div v-if="sortedCards.length > 0"  class="flex items-center gap-4">
+        >
+          <div v-if="sortedCards.length > 0" class="flex items-center gap-4">
             <!-- Afficher le nom de la carte si on n'est pas en mode édition -->
             <h2 v-if="editingCard?.name !== card.name" class="text-xl font-semibold text-gray-900">
               <a href="#" @click.prevent="modalVisible(card.value, card.name, card.responseCard)">{{
@@ -350,22 +406,31 @@ onMounted(() => {
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               />
               <div class="flex gap-3">
-              <button
-                type="submit"
-                class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600"
-              >
-                Sauvegarder
-              </button>
-              <!-- Bouton de suppression pour chaque cartes -->
-              <buttondelete @click.prevent="DeleteCards(card.name)" />
+                <button
+                  type="submit"
+                  class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600"
+                >
+                  Sauvegarder
+                </button>
+                <!-- Bouton de suppression pour chaque cartes -->
+                <buttondelete @click.prevent="DeleteCards(card.name)" />
               </div>
             </form>
 
             <button @click.prevent="toggleEdit(card)">
               <PencilIcon class="px-3 py-2 w-[3rem]" />
             </button>
-            <span class="text-sm text-gray-500">Niveau: {{ card.level }}</span>
-            <button @click="validateCard(card)" class="bg-green-500 text-white px-2 py-1 rounded-md">Valider</button>
+            <span
+              :class="`text-${card.level === 1 ? 'green' : card.level === 2 ? 'blue' : 'red'}-500`"
+            >
+              Niveau: {{ card.level }}
+            </span>
+            <button
+              @click="validateCard(card)"
+              class="bg-green-500 text-white px-2 py-1 rounded-md"
+            >
+              Valider
+            </button>
           </div>
         </div>
       </div>

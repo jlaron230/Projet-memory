@@ -1,6 +1,6 @@
 import { cacheAssets, cleanUpOldCaches, putInCache } from './cache.js'
 import { createCategory, deleteCategory, updateCategory, CACHE_CATEGORIES } from './categories.js'
-import { createCard, deleteCard, updateCard,  getDailyCards, validateCard } from './cards.js'
+import { createCard, deleteCard, updateCard,  getDailyCards, validateCard, setMaxCardsPerDay, getMaxCardsPerDay } from './cards.js'
 import { createTheme, updateTheme, deleteTheme} from './theme.js'
 // Définir le cache pour les assets
 const CACHE_ASSETS = 'assets-v1';
@@ -52,6 +52,15 @@ self.addEventListener('message', (event) => {
     deleteTheme(categoryId, name);
   }
 
+  if (event.data && event.data.type === 'SET_MAX_CARDS_PER_DAY') {
+    const { maxCards } = event.data.data;
+    setMaxCardsPerDay(maxCards);
+  }
+
+  if (event.data && event.data.type === 'GET_MAX_CARDS_PER_DAY') {
+    getMaxCardsPerDay().then(maxCards => event.ports[0].postMessage(maxCards));
+  }
+
   if (event.data && event.data.type === 'CREATE_CARD') {
     const { themeId, name, options, value, responseCard } = event.data.data;
     createCard( themeId, name, options, value, responseCard);
@@ -71,9 +80,9 @@ self.addEventListener('message', (event) => {
     getDailyCards().then(cards => event.ports[0].postMessage(cards));
   }
 
-  if (event.data && event.data.type === 'VALIDATE_CARD') { // Correction ici
-    const { themeId, name } = event.data.data;
-    validateCard(themeId, name);
+  if (event.data && event.data.type === 'VALIDATE_CARD') {
+    const { themeId, name, success  } = event.data.data;
+    updateCardReview(themeId, name, success );
   }
 
 });
