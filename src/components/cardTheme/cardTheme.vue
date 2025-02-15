@@ -55,7 +55,9 @@ watch(dailyNewCardLimit, (newLimit) => {
 // Fonction pour suivre le nombre total de cartes révisées aujourd'hui
 const updateTotalReviewedToday = () => {
   const today = new Date().toISOString().split('T')[0]
-  totalReviewedToday.value = cards.value.filter((card) => card.lastReviewed === today).length
+    return cards.value
+      .filter(card => card.nextReviewDate && card.nextReviewDate <= today)
+      .sort((a, b) => (a.lastReviewed || '') > (b.lastReviewed || '') ? 1 : -1);
 }
 
 // Fonction pour activer et désactiver la modal
@@ -157,7 +159,12 @@ const validateCard = async (card: any) => {
 
   // Calculer la prochaine date de révision
   const nextReview = new Date()
-  nextReview.setDate(nextReview.getDate() + intervals[card.level])
+
+  if (isNaN(nextReview.getTime())){
+    console.log(`erreur : next review est une date invalide : ${nextReview}`)
+    return
+  }
+  nextReview.setDate(nextReview.getDate() + intervals[card.level - 1])
   card.nextReviewDate = nextReview.toISOString().split('T')[0]
 
   card.lastReviewed = today // Mettre à jour la date de révision
@@ -179,7 +186,9 @@ const updateCardInCache = async (updatedCard: any) => {
 
       // Supprimer l'ancienne version de la carte
       const existing = await cache.match(requestUrl)
-      if (existing)
+      if (existing) {
+        await cache.delete(requestUrl);
+      }
       await cache.put(new Request(requestUrl), new Response(JSON.stringify(updatedCard)))
 
       console.log('Carte mise à jour dans le cache :', updatedCard)

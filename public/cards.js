@@ -1,7 +1,7 @@
 import { CACHE_CATEGORIES } from './categories.js'
 
 export const CACHE_CARDS = 'cards-v1'
-const MAX_CARDS_PER_DAY = 3
+const DEFAULT_MAX_CARDS_PER_DAY = 3
 const CACHE_SETTINGS = 'settings-v1'
 const REVIEW_INTERVALS = [1, 3, 7, 14, 30];
 
@@ -119,7 +119,7 @@ export async function getDailyCards() {
 
 export async function updateCardReview(themeId, cardName, success) {
   const cache = await caches.open(CACHE_CARDS);
-  const key = `card-${themeId}-${cardName}`;
+  const key = new Request(`/cards/${themeId}/${cardName}`);
 
   let cardData = await cache.match(key).then(res => res ? res.json() : null);
 
