@@ -12,13 +12,10 @@
       <nav class="hidden md:flex flex-grow justify-center">
         <ul class="flex gap-4 text-lg">
           <li><router-link to="/categorie" class="!text-white hover:text-blue-300 transition">Catégories</router-link></li>
-          <li><router-link to="/theme" class="!text-white hover:text-blue-300 transition">Mes thèmes</router-link></li>
-          <li><router-link to="/reviser" class="!text-white hover:text-blue-300 transition">Réviser</router-link></li>
-          <li><router-link to="/importer" class="!text-white hover:text-blue-300 transition">Importer un thème</router-link></li>
-          <li><router-link to="/parametres" class="!text-white hover:text-blue-300 transition">Paramètres</router-link></li>
           <li><router-link to="/aide" class="!text-white hover:text-blue-300 transition">Aide / À propos</router-link></li>
         </ul>
       </nav>
+
 
       <!-- Menu Burger (Mobile) -->
       <button
