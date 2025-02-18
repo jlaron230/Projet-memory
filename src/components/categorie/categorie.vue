@@ -172,7 +172,6 @@ onMounted(() => {
           ➕ Ajouter une catégorie
         </button>
       </form>
-
       <div v-if="categories.length > 0" class="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
         <div v-for="(category, index) in categories" :key="index" class="relative bg-white p-5 rounded-lg shadow-md flex flex-col gap-3 transition hover:shadow-lg border-l-4 border-indigo-500 hover:border-indigo-600 transform hover:scale-105">
           <h2 class="text-lg font-semibold text-gray-900 flex justify-between items-center">
