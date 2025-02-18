@@ -48,7 +48,7 @@ const CreateCategories = () => {
 // Fonction pour récupérer les catégories depuis le cache
 const getCategoriesFromCache = async () => {
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-    const cache = await caches.open('v1')
+    const cache = await caches.open('categories-v1')
     const cachedCategories = []
 
     // Parcourir toutes les clés du cache pour récupérer les catégories
