@@ -2,8 +2,6 @@
 import { ref, onMounted } from 'vue'
 import buttondelete from '@/components/button/button-delete.vue'
 import { PencilIcon } from '@heroicons/vue/20/solid'
-import CardTheme from '@/views/CardTheme.vue'
-import Theme from '@/views/Theme.vue'
 
 const categoryName = ref<string>('')  // Pour la création de la catégorie
 const categories = ref<any[]>([]) // Liste des catégories
@@ -50,34 +48,35 @@ const CreateCategories = () => {
 // Fonction pour récupérer les catégories depuis le cache
 const getCategoriesFromCache = async () => {
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-    const cache = await caches.open('categories-v1');
-    const cachedCategories = [];
+    const cache = await caches.open('v1')
+    const cachedCategories = []
 
-    const cacheKeys = await cache.keys();
-    console.log('Clés du cache :', cacheKeys);
+    // Parcourir toutes les clés du cache pour récupérer les catégories
+    const cacheKeys = await cache.keys()
+    console.log('Clés du cache :', cacheKeys)
 
     for (const request of cacheKeys) {
-      const requestUrl = new URL(request.url);
+      const requestUrl = new URL(request.url)
 
-      if (requestUrl.pathname.startsWith('/categories/')) { // Vérifie bien que les catégories sont dans le bon cache
+      if (requestUrl.pathname.startsWith('/categories/')) {
         try {
-          const response = await cache.match(request);
+          const response = await cache.match(request)
 
           if (response && response.ok) {
-            const categoryData = await response.json();
-            console.log('Catégorie récupérée depuis le cache :', categoryData);
-            cachedCategories.push(categoryData);
+            const categoryData = await response.json()
+            console.log('Catégorie récupérée depuis le cache :', categoryData)
+            cachedCategories.push(categoryData)
           }
         } catch (error) {
-          console.error('Erreur lors de la récupération de la catégorie du cache :', error);
+          console.error('Erreur lors de la récupération de la catégorie du cache :', error)
         }
       }
     }
 
-    categories.value = cachedCategories;
-    console.log('Catégories après récupération du cache :', categories.value);
+    // Mise à jour de la variable `categories`
+    categories.value = cachedCategories
   }
-};
+}
 
 // Fonction pour mettre à jour une catégorie
 const PutCategories = () => {
@@ -120,30 +119,18 @@ const cancelEdit = () => {
 
 // Fonction pour supprimer une catégorie
 const DeleteCategories = async (categoryName: string) => {
-  if (!categoryName || typeof categoryName !== 'string') return console.error('Nom de catégorie invalide');
+  categories.value = categories.value.filter(c => c.name !== categoryName)
 
-  console.log(`Suppression de la catégorie : ${categoryName}`);
+  console.log(`Suppression de la catégorie : ${categoryName}`)
 
-  // 1. Supprimer de la liste locale
-  categories.value = categories.value.filter(c => c.name !== categoryName);
-
-  // 2. Supprimer du cache et envoyer au Service Worker
-  if ('caches' in window) {
-    try {
-      const cache = await caches.open('categories-v1');
-      for (const request of await cache.keys()) {
-        if (new URL(request.url).pathname === `/categories/${encodeURIComponent(categoryName)}`) {
-          await cache.delete(request);
-          console.log(`Catégorie supprimée du cache`);
-          break;
-        }
-      }
-      navigator.serviceWorker?.controller?.postMessage({ type: 'DELETE_CATEGORY', category: categoryName });
-    } catch (error) {
-      console.error('Erreur lors de la suppression du cache', error);
-    }
+  // Envoyer un message au Service Worker pour supprimer la catégorie
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'DELETE_CATEGORY',
+      category: categoryName
+    })
   }
-};
+}
 
 onMounted(() => {
   if (navigator.serviceWorker) {
@@ -185,7 +172,6 @@ onMounted(() => {
           ➕ Ajouter une catégorie
         </button>
       </form>
-      
       <div v-if="categories.length > 0" class="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
         <div v-for="(category, index) in categories" :key="index" class="relative bg-white p-5 rounded-lg shadow-md flex flex-col gap-3 transition hover:shadow-lg border-l-4 border-indigo-500 hover:border-indigo-600 transform hover:scale-105">
           <h2 class="text-lg font-semibold text-gray-900 flex justify-between items-center">
@@ -212,7 +198,6 @@ onMounted(() => {
               <buttondelete @click.prevent="DeleteCategories(category.name)" class="bg-red-500 text-white px-4 py-2 rounded-md font-semibold hover:bg-red-600 transition">🗑️</buttondelete>
             </div>
           </form>
-
         </div>
       </div>
 
