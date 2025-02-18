@@ -7,6 +7,11 @@ import modalMemory from '@/components/cardTheme/modalMemory.vue'
 const CardName = ref<string>('') // Pour la création de la carte
 const CardQuestion = ref<string>('') // Pour la création de la question
 const CardResponse = ref<string>('') // Pour la création de la réponse
+const CardImage = ref<any[]>([])
+const form = ref<any>({
+  media: {},
+});
+const selectedFiles = ref<any>([]);
 const cards = ref<any[]>([]) // Liste des cartes
 const isEditable = ref(false) // Si un formulaire est en mode édition
 const editingCard = ref<any | null>(null) // carte en édition
@@ -99,11 +104,29 @@ const toggleEdit = (cards: any) => {
   CardQuestion.value = cards.value // Affiche les options sous forme de texte
   CardResponse.value = cards.responseCard
   isEditable.value = true
+  CardImage.value = cards.image
 }
+
+const handelFileUpload = (e:any) => {
+  const files = e.target.files || e.dataTransfer.files;
+  if (!files.length) return;
+
+  for (let i = 0; i < files.length; i++) {
+    selectedFiles.value.push(files[i]);
+    const src = URL.createObjectURL(files[i]);
+    CardImage.value.push(src);
+  }
+  console.log(selectedFiles.value, "seldjhfdh fikes");
+
+  form.value.media = e.target.files[0];
+  console.log(form.value.media, "file upload");
+
+  console.log("files already uploaded", CardImage.value);
+};
 
 // Fonction pour créer une nouvelle carte
 const CreateCards = () => {
-  if (!CardName.value.trim() || !CardQuestion.value.trim() || !CardResponse.value.trim()) {
+  if (!CardName.value.trim() || !CardQuestion.value.trim() || !CardResponse.value.trim()){
     alert('Le nom de la carte et la question est requis')
     return
   }
@@ -122,6 +145,7 @@ const CreateCards = () => {
       themeId: props.themeId,
       level: 1,
       lastReviewed: null,
+      image: CardImage.value,
     }
 
     // ✅ Mettre à jour immédiatement `cards.value` pour afficher la carte
@@ -142,6 +166,7 @@ const CreateCards = () => {
   CardName.value = ''
   CardQuestion.value = ''
   CardResponse.value = ''
+  CardImage.value = []
 }
 
 const validateCard = async (card: any) => {
@@ -363,6 +388,15 @@ onMounted(() => {
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
           />
+          <label for="cardImage" class="block text-sm font-medium text-gray-700">Image</label>
+          <input
+            id="cardImage"
+            type="file"
+            accept="image/*"
+            @change="(event) => handelFileUpload(event)"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          />
+          <button class="btn-upload">Choisir une image</button>
         </div>
 
         <div class="flex justify-end">
@@ -389,6 +423,12 @@ onMounted(() => {
                 card.name
               }}</a>
             </h2>
+            <div
+              v-for="(src, index) in CardImage"
+              :key="index"
+              class="images-lists"
+            ><img :src="src" alt="image uploader">
+            </div>
 
             <!-- Formulaire d'édition de cartes -->
             <form
@@ -404,6 +444,12 @@ onMounted(() => {
               />
               <input
                 v-model="CardQuestion"
+                type="text"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              />
+              <input
+                v-model="CardResponse"
                 type="text"
                 required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
