@@ -1,29 +1,40 @@
-<script setup lang="ts">
-import { ref, onMounted } from 'vue'
+<script setup lang="ts" xmlns="http://www.w3.org/1999/html">
+import { ref, onMounted, computed } from 'vue'
 import buttondelete from '@/components/button/button-delete.vue'
+import { PencilIcon } from '@heroicons/vue/20/solid'
 
-// Liste des thèmes
-const themeName = ref<string>('')
-const themeDescription = ref('')
 const themes = ref<any[]>([])
+const themeName = ref<string>('')
+const themeDescription = ref<string>('')
+const isEditable = ref(false)
+const editingTheme = ref<any | null>(null)
+const props = defineProps<{ themeId: string }>()
 
-// Prop pour modifier un thème existant
-const props = defineProps({
-  themeToEdit: {
-    type: Object,
-    default: null
-  }
+// Fonction pour activer l'édition
+const toggleEdit = (theme: any) => {
+  // Garde une référence à la du thème à éditer
+  editingTheme.value = theme
+  themeName.value = theme.name// Affiche les options sous forme de texte
+  isEditable.value = true
+  themeDescription.value = theme.description
+}
+
+// Filtrage des thèmes en fonction de la catégorie sélectionnée
+const filteredThemes = computed(() => {
+  return themes.value.filter((theme) => theme.themeId == props.themeId)
 })
 
-const CreateThemes = () => {
-  if (!themeName.value.trim() || !themeDescription.value.trim()) {
-    alert('Le nom et la description du thème sont requis')
+// Fonction pour créer un nouveau thème
+const Createtheme = () => {
+  if (!themeName.value.trim() && !themeDescription.value.trim()) {
+    alert('Le nom du thème est requis')
     return
   }
 
   const themeData = {
     name: themeName.value,
-    description: themeDescription.value
+    description: themeDescription.value,
+    themeId: props.themeId,
   }
 
   // Envoi du thème au Service Worker
@@ -45,11 +56,11 @@ const CreateThemes = () => {
   themeDescription.value = ''
 }
 
+// Fonction pour récupérer les thèmes depuis le cache
 const getThemesFromCache = async () => {
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-    const cache = await caches.open('v1')
+    const cache = await caches.open('themes-v1')
     const cachedThemes = []
-
 
     const cacheKeys = await cache.keys()
     console.log('Clés du cache :', cacheKeys)
@@ -57,13 +68,13 @@ const getThemesFromCache = async () => {
     for (const request of cacheKeys) {
       const requestUrl = new URL(request.url)
 
-      if (requestUrl.pathname.startsWith('/themes/')) {
+      if (requestUrl.pathname.startsWith('/themes/')) { // Vérifie bien que les thèmes sont dans le bon cache
         try {
           const response = await cache.match(request)
 
           if (response && response.ok) {
             const themeData = await response.json()
-            console.log('Thème récupéré depuis le cache :', themeData)
+            console.log('Thèmes récupérée depuis le cache :', themeData)
             cachedThemes.push(themeData)
           }
         } catch (error) {
@@ -72,53 +83,77 @@ const getThemesFromCache = async () => {
       }
     }
 
-    // Log pour vérifier que les thèmes sont bien récupérés
-    console.log('Thèmes mis à jour :', cachedThemes)
-
-    // Mise à jour de la variable `themes`
-    themes.value = cachedThemes
+    themes.value = cachedThemes.filter(theme => theme.themeId === props.themeId)
+    console.log('Thèmes après récupération du cache :', themes.value)
   }
 }
 
-const DeleteThemes = async (themeName: string) => {
-  if (!themeName || typeof themeName !== 'string') {
-    console.error(' Aucun nom de thème spécifié ou mauvais type.', themeName)
+
+// Fonction pour mettre à jour un thème
+const PutTheme = () => {
+  if (!themeName.value.trim() && !themeDescription.value.trim()) {
+    alert('Le nom du thème est requis')
     return
   }
 
-  console.log(` Suppression du thème : ${themeName}`)
+  // Mise à jour du thème dans le tableau local de Vue
+  const themeIndex = themes.value.findIndex(c => c.name === editingTheme.value.name)
+  if (themeIndex !== -1) {
+    themes.value[themeIndex] = {
+      themeId: props.themeId,
+      name: themeName.value,
+      description: themeDescription.value
+    }
+  }
 
+  // Envoi de la mise à jour au Service Worker pour qu'il mette à jour le cache
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'UPDATE_THEME',
+      data: {
+        originalName: editingTheme.value.name,  // Nom original à mettre à jour
+        newName: themeName.value, // Nouveau nom// Options mises à jour
+        newDescription: themeDescription.value,
+        originalDescription: editingTheme.value.description,
+        themeId: props.themeId
+      }
+    })
+  }
+
+  // Désactiver l'édition après avoir sauvegardé
+  isEditable.value = false
+  editingTheme.value = null
+  themeName.value = ''
+  themeDescription.value = ''
+}
+
+// Fonction pour supprimer un thème
+const DeleteTheme = async (themeName: string) => {
+  if (!themeName || typeof themeName !== 'string') return console.error('Nom du thème invalide')
+
+  console.log(`Suppression de la catégorie : ${themeName}`)
+
+  // 1. Supprimer de la liste locale
+  themes.value = themes.value.filter(c => c.name !== themeName)
+
+  // 2. Supprimer du cache et envoyer au Service Worker
   if ('caches' in window) {
     try {
-      const cache = await caches.open('v1')
-      const cacheKeys = await cache.keys()
-
-      for (const request of cacheKeys) {
-        const requestUrl = new URL(request.url)
-
-        // On vérifie si le cache contient le thème que l'on veut supprimer
-        if (requestUrl.pathname === `/themes/${encodeURIComponent(themeName)}`) {
+      const cache = await caches.open('themes-v1')
+      for (const request of await cache.keys()) {
+        if (new URL(request.url).pathname === `/themes/${encodeURIComponent(themeName)}`) {
           await cache.delete(request)
-          console.log(` Thème supprimé du cache : ${requestUrl.pathname}`)
+          console.log(`Thème supprimée du cache`)
           break
         }
       }
-
-      // Envoyer un message au Service Worker pour supprimer le thème
-      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'DELETE_THEME',
-          theme: themeName
-        })
-      }
-
-      const index = themes.value.findIndex(theme => theme.name === themeName)
-      if (index !== -1) {
-        themes.value.splice(index, 1) // Supprime seulement la première occurrence trouvée
-      }
-
+      navigator.serviceWorker?.controller?.postMessage({
+        type: 'DELETE_THEME',
+        name: themeName,
+        themeId: props.themeId
+      })
     } catch (error) {
-      console.error(' Erreur lors de la suppression du cache :', error)
+      console.error('Erreur lors de la suppression du cache', error)
     }
   }
 }
@@ -143,56 +178,87 @@ onMounted(() => {
 <template>
   <section class="bg-white shadow-sm">
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex place-content-between">
-      <h1 class="text-3xl font-bold tracking-tight text-gray-900">Mes Thèmes</h1>
+      <h1 class="text-3xl font-bold tracking-tight text-gray-900">Thèmes de la catégorie {{ themeId
+        }}</h1>
     </div>
-    <!-- Formulaire pour créer un thème -->
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <form @submit.prevent="CreateThemes" class="mt-5 flex flex-col gap-4">
-        <div>
-          <label for="themeName" class="block text-sm font-medium text-gray-700">Nom du thème</label>
-          <input
-            id="themeName"
-            v-model="themeName"
-            type="text"
-            required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
-        </div>
-
-        <!-- Description du thème -->
-        <div>
-          <label for="themeDescription" class="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            id="themeDescription"
-            v-model="themeDescription"
-            type="text"
-            placeholder="Description du thème"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          ></textarea>
-        </div>
-
-        <div class="flex justify-end">
-          <button type="submit" class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
-            Créer le thème
+      <form @submit.prevent="Createtheme">
+        <label for="themeName" class="block text-sm font-bold tracking-tight text-gray-900">
+          Nom du thème :
+        </label>
+        <input
+          id="themeName"
+          v-model="themeName"
+          type="text"
+          required
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+        />
+        <label for="themeDescription"
+               class="block text-sm font-bold tracking-tight text-gray-900 mt-4">
+          Description du thème :
+        </label>
+        <textarea
+          id="themeDescription"
+          v-model="themeDescription"
+          required
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+        ></textarea>
+        <div class="flex justify-end mt-4">
+          <button
+            type="submit"
+            class="mt-1 block rounded-md bg-indigo-600 text-white px-4 py-2 shadow-sm hover:bg-indigo-700"
+          >
+            Ajouter
           </button>
         </div>
       </form>
 
-      <!-- Liste des thèmes -->
-      <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div v-if="themes.length > 0" class="space-y-6">
-          <div v-for="(theme, index) in themes" :key="index" class="bg-gray-100 p-4 rounded-lg">
-            <h2 class="text-xl font-semibold text-gray-900">{{ theme.name }}</h2>
-            <p class="text-sm text-gray-600">{{ theme.description }}</p>
+      <!-- Liste des catégories -->
+      <div v-if="filteredThemes.length > 0" class="space-y-6">
+        <div v-for="(theme, index) in filteredThemes" :key="index"
+             class="bg-gray-100 p-4 rounded-lg flex gap-4">
+          <div class="flex items-center gap-4">
+            <!-- Afficher le nom de la catégorie si on n'est pas en mode édition -->
+            <h2 v-if="!isEditable || editingTheme?.name !== theme.name"
+                class="text-xl font-semibold text-gray-900">
+              <router-link
+                :to="{ name: 'CardTheme', params: { themeId: theme.name }}"
+                class="cursor-pointer text-xl font-semibold text-gray-900 hover:text-blue-600">
+                {{ theme.name }}
+              </router-link>
+            </h2>
+            <div>
+              <p v-if="!isEditable || editingTheme?.name !== theme.name">{{ theme.description }}</p>
+            </div>
 
-            <!-- Bouton de suppression pour chaque thème -->
-            <buttondelete @click.prevent="DeleteThemes(theme.name)" />
+            <!-- Formulaire d'édition de catégorie -->
+            <form v-if="isEditable && editingTheme?.name === theme.name" @submit.prevent="PutTheme"
+                  class="mt-5 flex flex-col gap-4">
+              <input
+                v-model="themeName"
+                type="text"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              />
+              <div class="flex gap-4">
+                <button type="submit"
+                        class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
+                  Sauvegarder
+                </button>
+                <!-- Bouton de suppression pour chaque catégorie -->
+                <buttondelete @click.prevent="DeleteTheme(theme.name)" />
+              </div>
+            </form>
+
+            <button @click.prevent="toggleEdit(theme)">
+              <PencilIcon class="px-3 py-2 w-[3rem]" />
+            </button>
           </div>
         </div>
-        <div v-else class="text-center text-gray-500">
-          <p>Aucun thème créé pour le moment.</p>
-        </div>
+      </div>
+      <div v-else class="text-center text-gray-500">
+        <p>Aucune catégorie créée pour le moment.</p>
       </div>
     </div>
   </section>
-</template>
+</template>’

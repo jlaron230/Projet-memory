@@ -11,7 +11,7 @@ const app = createApp(App)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/service-worker.js')
+      .register('/service-worker.js', { type: 'module' })
       .then((registration) => {
         console.log('Service Worker enregistré avec succès :', registration.scope);
       })
