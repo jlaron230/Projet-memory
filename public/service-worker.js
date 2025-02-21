@@ -62,13 +62,13 @@ self.addEventListener('message', (event) => {
   }
 
   if (event.data && event.data.type === 'CREATE_CARD') {
-    const { themeId, name, options, value, responseCard } = event.data.data;
-    createCard( themeId, name, options, value, responseCard);
+    const { themeId, name, options, value, responseCard, image } = event.data.data;
+    createCard( themeId, name, options, value, responseCard, image);
   }
 
   if (event.data && event.data.type === 'UPDATE_CARD') {
-    const { themeId, originalName, newName, options, newQuestion, originalQuestion, originalResponse, newResponse } = event.data.data;
-    updateCard( themeId, originalName, newName, options, newQuestion, originalQuestion, newResponse, originalResponse);
+    const { themeId, originalName, newName, options, newQuestion, originalQuestion, originalResponse, newResponse, originalImage } = event.data.data;
+    updateCard( themeId, originalName, newName, options, newQuestion, originalQuestion, newResponse, originalResponse, originalImage);
   }
 
   if (event.data && event.data.type === 'DELETE_CARD') {
@@ -86,6 +86,17 @@ self.addEventListener('message', (event) => {
   }
 
 });
+
+self.addEventListener("push", (event) => {
+  const options = {
+    body: "Prenez quelques minutes pour réviser vos cartes ! 📖",
+    icon: "/icons/notification-icon.png",
+    badge: "/icons/badge.png",
+  }
+  event.waitUntil(
+    self.registration.showNotification("Rappel de révision", options)
+  );
+})
 
 // Gestion des requêtes fetch
 self.addEventListener('fetch', (event) => {

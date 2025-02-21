@@ -3,10 +3,16 @@ import { ref, onMounted, computed, watch } from 'vue'
 import buttondelete from '@/components/button/button-delete.vue'
 import { PencilIcon } from '@heroicons/vue/20/solid'
 import modalMemory from '@/components/cardTheme/modalMemory.vue'
-
+import { nextTick } from 'vue';
 const CardName = ref<string>('') // Pour la création de la carte
 const CardQuestion = ref<string>('') // Pour la création de la question
 const CardResponse = ref<string>('') // Pour la création de la réponse
+const CardImage = ref<any[]>([])
+const fileInput = ref<any>(null)
+const form = ref<any>({
+  media: {},
+});
+const selectedFiles = ref<any>([]);
 const cards = ref<any[]>([]) // Liste des cartes
 const isEditable = ref(false) // Si un formulaire est en mode édition
 const editingCard = ref<any | null>(null) // carte en édition
@@ -14,6 +20,7 @@ const isModalOpen = ref(false)
 const selectedQuestion = ref<string | null>(null)
 const selectedNameCard = ref<string | null>(null)
 const selectedResponseCard = ref<string | null>(null)
+const selectedImage = ref<string | null>(null)
 const props = defineProps<{ themeId: string }>()
 const dailyNewCardLimit = ref<number>(3)
 const totalReviewedToday = ref<number>(0)
@@ -52,20 +59,29 @@ watch(dailyNewCardLimit, (newLimit) => {
   saveLimitToCache()
 })
 
-// Fonction pour suivre le nombre total de cartes révisées aujourd'hui
-const updateTotalReviewedToday = () => {
-  const today = new Date().toISOString().split('T')[0]
-    return cards.value
-      .filter(card => card.nextReviewDate && card.nextReviewDate <= today)
-      .sort((a, b) => (a.lastReviewed || '') > (b.lastReviewed || '') ? 1 : -1);
+const convertBase64 = (file: File) => {
+return new Promise<string>((resolve, reject) => {
+  const reader = new FileReader()
+  reader.readAsDataURL(file)
+  reader.onload = () => resolve(reader.result as string)
+  reader.onerror = reject
+})
 }
 
+// Fonction pour suivre le nombre total de cartes révisées aujourd'hui
+const updateTotalReviewedToday = () => {
+  const today = new Date().toISOString().split('T')[0];
+  totalReviewedToday.value = cards.value.filter(card => card.lastReviewed === today).length;
+}
+watch(cards, updateTotalReviewedToday, { deep: true });
+
 // Fonction pour activer et désactiver la modal
-const modalVisible = (question: string, nameCard: string, responseC: string) => {
+const modalVisible = (question: string, nameCard: string, responseC: string, image: string) => {
   isModalOpen.value = true
   selectedQuestion.value = question
   selectedNameCard.value = nameCard
   selectedResponseCard.value = responseC
+  selectedImage.value = image
 }
 
 // Filtrage des thèmes en fonction de la catégorie sélectionnée
@@ -82,12 +98,13 @@ const closeModal = () => {
   selectedQuestion.value = null
   selectedNameCard.value = null
   selectedResponseCard.value = null
+  selectedImage.value = null
 }
 
 const sortedCards = computed(() => {
   return cards.value
     .filter((card) => card.themeId === props.themeId)
-    .sort((a, b) => ((a.lastReviewed || '') > (b.lastReviewed || '') ? 1 : -1))
+    .sort((a, b) => (a.lastReviewed || '').localeCompare(b.lastReviewed || ''))
     .slice(0, dailyNewCardLimit.value)
 })
 
@@ -99,10 +116,28 @@ const toggleEdit = (cards: any) => {
   CardQuestion.value = cards.value // Affiche les options sous forme de texte
   CardResponse.value = cards.responseCard
   isEditable.value = true
+  CardImage.value = cards.image
 }
 
+const handelFileUpload = async (e: any) => {
+  const files = e.target.files || e.dataTransfer.files;
+  if (!files.length) return;
+
+  for (let i = 0; i < files.length; i++) {
+    selectedFiles.value.push(files[i]);
+    const src = await convertBase64(files[i]);
+    CardImage.value.push(src);
+  }
+  console.log(selectedFiles.value, "seldjhfdh fikes");
+
+  form.value.media = e.target.files[0];
+  console.log(form.value.media, "file upload");
+
+  console.log("files already uploaded", CardImage.value);
+};
+
 // Fonction pour créer une nouvelle carte
-const CreateCards = () => {
+const CreateCards = async () => {
   if (!CardName.value.trim() || !CardQuestion.value.trim() || !CardResponse.value.trim()) {
     alert('Le nom de la carte et la question est requis')
     return
@@ -114,7 +149,16 @@ const CreateCards = () => {
   if (todayCards >= dailyNewCardLimit.value) {
     alert(`Vous avez atteint la limite de ${dailyNewCardLimit.value} cartes par jour`)
     return
-  } else {
+  }
+  // Vérifier si les images doivent être converties en base64
+  const base64Images = await Promise.all(
+    CardImage.value.map(async (file) => {
+      if (file instanceof File) {
+        return await convertBase64(file)
+      }
+      return file // Si ce n'est pas un fichier, garder tel quel
+    })
+  )
     const cardData = {
       name: CardName.value,
       value: CardQuestion.value,
@@ -122,11 +166,13 @@ const CreateCards = () => {
       themeId: props.themeId,
       level: 1,
       lastReviewed: null,
+      image: base64Images,
     }
+    console.log(cardData)
 
     // ✅ Mettre à jour immédiatement `cards.value` pour afficher la carte
     cards.value.push(cardData)
-
+    updateCardInCache(cardData);
     // Envoi de la carte au Service Worker
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
@@ -137,11 +183,16 @@ const CreateCards = () => {
     } else {
       console.error('Service Worker non disponible')
     }
-  }
+
   // Réinitialisation des champs du formulaire
   CardName.value = ''
   CardQuestion.value = ''
   CardResponse.value = ''
+  CardImage.value = []
+  if(fileInput.value) {
+    fileInput.value.value = ''
+  }
+  fileInput.value = null
 }
 
 const validateCard = async (card: any) => {
@@ -174,6 +225,7 @@ const validateCard = async (card: any) => {
   const index = cards.value.findIndex((c) => c.name === card.name && c.themeId === card.themeId)
   if (index !== -1) {
     cards.value[index] = { ...card }
+    cards.value = [...cards.value]
   }
   await getCardsFromCache();
 }
@@ -200,25 +252,30 @@ const updateCardInCache = async (updatedCard: any) => {
 
 // Fonction pour récupérer les cartes depuis le cache
 const getCardsFromCache = async () => {
-  if (!('caches' in window)) return
+  if (!('caches' in window)) return;
 
   try {
-    const cache = await caches.open('cards-v1')
-    const keys = await cache.keys()
-    const themeCards = keys
-      .filter((request) => new URL(request.url).pathname.includes(`/cards/${props.themeId}/`)) // Filtrer directement les cartes par themeId
-      .map(async (request) => {
-        const response = await cache.match(request)
-        return response ? await response.json() : null
-      })
+    const cache = await caches.open('cards-v1');
+    const keys = await cache.keys();
+    console.log('🗂️ Clés trouvées dans le cache:', keys.map(k => k.url));
 
-    const resolvedCards = await Promise.all(themeCards)
-    cards.value = resolvedCards.filter(card => card !== null)
-    console.log('✅ Cartes récupérées :', cards.value) // Log
+    const themeCards = keys
+      .filter((request) => new URL(request.url).pathname.includes(`/cards/${props.themeId}/`))
+      .map(async (request) => {
+        const response = await cache.match(request);
+        return response ? await response.json() : null;
+      });
+
+    const resolvedCards = await Promise.all(themeCards);
+
+    // Mise à jour des cartes avec nextTick pour forcer Vue à voir le changement
+    cards.value = resolvedCards.filter(card => card !== null);
+    await nextTick();
+    console.log('✅ Cartes finales après nextTick:', cards.value);
   } catch (error) {
-    console.error('❌ Erreur récupération cache:', error)
+    console.error('❌ Erreur récupération cache:', error);
   }
-}
+};
 
 // Fonction pour mettre à jour une carte
 const PutCards = () => {
@@ -363,6 +420,17 @@ onMounted(() => {
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
           />
+          <label for="cardImage" class="block text-sm font-medium text-gray-700">Image</label>
+          <input
+            v-if="CardImage"
+            id="cardImage"
+            type="file"
+            accept="image/*"
+            ref="fileInput"
+            @change="(event) => handelFileUpload(event)"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          />
+          <button class="btn-upload">Choisir une image</button>
         </div>
 
         <div class="flex justify-end">
@@ -385,7 +453,7 @@ onMounted(() => {
           <div v-if="sortedCards.length > 0" class="flex items-center gap-4">
             <!-- Afficher le nom de la carte si on n'est pas en mode édition -->
             <h2 v-if="editingCard?.name !== card.name" class="text-xl font-semibold text-gray-900">
-              <a href="#" @click.prevent="modalVisible(card.value, card.name, card.responseCard)">{{
+              <a href="#" @click.prevent="modalVisible(card.value, card.name, card.responseCard, card.image)">{{
                 card.name
               }}</a>
             </h2>
@@ -452,7 +520,9 @@ onMounted(() => {
       :question="selectedQuestion"
       :nameCard="selectedNameCard"
       :responseC="selectedResponseCard"
+      :image="selectedImage"
       @close="closeModal"
+
     />
   </section>
 </template>
