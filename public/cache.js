@@ -30,8 +30,8 @@ export const cleanUpOldCaches = () => {
 
 export const putInCache = async (request, response) => {
   const url = new URL(request.url);
-  if (!url.protocol.includes('http')) {
-    console.warn(`mise en cache impossible sur ${request.url}`);
+  if (url.protocol === "chrome-extension:") {
+    console.warn("Mise en cache impossible pour :", request.url);
     return;
   }
   const cache = await caches.open('v1');

@@ -24,7 +24,7 @@ export const getMaxCardsPerDay = async () => {
   return DEFAULT_MAX_CARDS_PER_DAY;
 };
 
-export const createCard = async (themeId, name, options, value, CardResponse, level = 1) => {
+export const createCard = async (themeId, name, options, value, CardResponse, level = 1, image) => {
   const cardData = JSON.stringify({
     themeId,
     name,
@@ -32,6 +32,7 @@ export const createCard = async (themeId, name, options, value, CardResponse, le
     value,
     responseCard: CardResponse,
     level,
+    image,
     lastReviewed: null,
     nextReview: new Date().toISOString().split('T')[0],
   })
