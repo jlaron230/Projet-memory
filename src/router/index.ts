@@ -26,13 +26,13 @@ const router = createRouter({
       component: Categorie,
     },
     {
-      path: '/CardTheme/:themeId',
+      path: '/theme/:themeId',
       name: 'CardTheme',
       component: CardTheme,
       props: true,
     },
     {
-      path: '/category/:categoryId',
+      path: '/categorie/:categoryId',
       name: 'Theme',
       component: Theme,
       props: true,

@@ -1,45 +1,54 @@
-# Projet-memory
+# 📚 Projet Memory
 
-This template should help get you started developing with Vue 3 in Vite.
+## Description du projet
 
-## Recommended IDE Setup
+**Memory** est une application de mémorisation basée sur la répétition espacée. Elle permet aux utilisateurs de créer des cartes de révision organisées en **thèmes**, eux-mêmes regroupés dans des **catégories**.  
+L'objectif est d'améliorer l'apprentissage en affichant des cartes à revoir selon un algorithme de répétition espacée.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+L'application fonctionne **hors-ligne** grâce à l'utilisation d'un **Service Worker** et d'un **fichier Manifest**.
 
-## Type Support for `.vue` Imports in TS
+---
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+## 🚀 Fonctionnalités principales
 
-## Customize configuration
+### 🎯 Gestion des catégories et thèmes
+- Création de **catégories** pour organiser les révisions.
+- Ajout de **thèmes** au sein des catégories.
+- Chaque **thème** contient des **cartes de révision**.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### 🃏 Gestion des cartes de révision
+- Chaque carte a un **recto** et un **verso** pouvant contenir du **texte, des images**.
+- Possibilité d'ajouter, modifier et supprimer des cartes.
 
-## Project Setup
+### 🔁 Révision avec répétition espacée
+- L’utilisateur choisit **le nombre de niveaux** et **le nombre de nouvelles cartes vues par jour**.
+- L'algorithme affiche d'abord les cartes les plus anciennes avant d'introduire de nouvelles cartes.
+- Possibilité de marquer une carte comme **mémorisée**, ce qui impacte sa fréquence d’apparition.
 
-```sh
-npm install
-```
+### 📢 Notifications et rappels
+- Option pour configurer un **rappel quotidien** afin de ne pas oublier ses révisions.
+- Utilisation des **notifications push** (si acceptées par l'utilisateur).
 
-### Compile and Hot-Reload for Development
 
-```sh
-npm run dev
-```
+### 📡 Mode hors-ligne
+- **Service Worker** pour la mise en cache des ressources.
+- **Fichier Manifest** pour une installation en tant qu'application PWA.
 
-### Type-Check, Compile and Minify for Production
+---
 
-```sh
-npm run build
-```
+## 🛠️ Technologies utilisées
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+- **Vue.js** avec **Vue Router** et **Pinia/Vuex** pour la gestion des états.
+- **Service Worker** pour la gestion du cache et du mode hors-ligne.
+- **IndexedDB ou CacheStorage** pour stocker les données de révision.
 
-```sh
-npm run test:unit
-```
+---
 
-### Lint with [ESLint](https://eslint.org/)
+## 📌 Déploiement
 
-```sh
-npm run lint
-```
+### 💻 Installation et lancement en local
+
+1. **Cloner le projet**
+   ```sh
+   git clone git@github.com:jlaron230/Projet-memory.git
+   cd Projet-memory
