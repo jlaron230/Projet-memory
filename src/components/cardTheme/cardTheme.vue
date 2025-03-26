@@ -373,148 +373,173 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="bg-white shadow-sm">
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex place-content-between">
-      <h1 class="text-3xl font-bold tracking-tight text-gray-900">Mes cartes</h1>
-    </div>
-    <!-- Formulaire pour créer une carte -->
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <!-- Champ pour modifier la limite quotidienne -->
-      <div class="mb-4">
-        <label for="limit" class="block text-sm font-medium text-gray-700"
-          >Nombre de nouvelles cartes par jour</label
-        >
+  <section class="py-10 px-6 bg-gradient-to-br from-blue-500 via-indigo-100 to-purple-100 border-2 border-blue-500 rounded-3xl shadow-xl max-w-3xl mx-auto">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <!-- Titre principal -->
+      <div class="mb-10 flex justify-between items-center">
+        <h1 class="text-4xl align-center font-bold text-gray-900">Mes cartes</h1>
+      </div>
+
+      <!-- Choix de la limite quotidienne -->
+      <div class="mb-6">
+        <label for="limit" class="block text-sm font-medium text-gray-700 mb-1">
+          Nombre de nouvelles cartes par jour
+        </label>
         <input
           id="limit"
           v-model.number="dailyNewCardLimit"
           type="number"
           min="1"
-          class="mt-1 block w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          class="w-24 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-200"
         />
       </div>
-      <form @submit.prevent="CreateCards" class="mt-5 flex flex-col gap-4">
-        <div>
-          <label for="cardName" class="block text-sm font-medium text-gray-700"
-            >Nom de la carte</label
-          >
-          <input
-            id="cardName"
-            v-model="CardName"
-            type="text"
-            required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
-          <label for="cardQuestion" class="block text-sm font-medium text-gray-700">Question</label>
-          <input
-            id="cardQuestion"
-            v-model="CardQuestion"
-            type="text"
-            required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
-          <label for="cardResponse" class="block text-sm font-medium text-gray-700">Réponse</label>
-          <input
-            id="cardResponse"
-            v-model="CardResponse"
-            type="text"
-            required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
-          <label for="cardImage" class="block text-sm font-medium text-gray-700">Image</label>
-          <input
-            v-if="CardImage"
-            id="cardImage"
-            type="file"
-            accept="image/*"
-            ref="fileInput"
-            @change="(event) => handelFileUpload(event)"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          />
-          <button class="btn-upload">Choisir une image</button>
+
+      <!-- Formulaire de création -->
+      <form @submit.prevent="CreateCards" class="space-y-5 bg-white shadow-md rounded-xl p-6 border border-gray-00">
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">Créer une nouvelle carte</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="cardName" class="block text-sm font-medium text-gray-700 mb-1">Nom de la carte</label>
+            <input
+              id="cardName"
+              v-model="CardName"
+              type="text"
+              required
+              class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-300"
+            />
+          </div>
+
+          <div>
+            <label for="cardQuestion" class="block text-sm font-medium text-gray-700 mb-1">Question</label>
+            <input
+              id="cardQuestion"
+              v-model="CardQuestion"
+              type="text"
+              required
+              class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-300"
+            />
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="cardResponse" class="block text-sm font-medium text-gray-700 mb-1">Réponse</label>
+            <input
+              id="cardResponse"
+              v-model="CardResponse"
+              type="text"
+              required
+              class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-300"
+            />
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="cardImage" class="block text-sm font-medium text-gray-700 mb-1">Image (optionnel)</label>
+            <input
+              id="cardImage"
+              type="file"
+              accept="image/*"
+              ref="fileInput"
+              @change="(event) => handelFileUpload(event)"
+              class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
         </div>
 
         <div class="flex justify-end">
           <button
             type="submit"
-            class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md font-medium"
           >
-            Créer la carte
+            ➕ Créer la carte
           </button>
         </div>
       </form>
 
       <!-- Liste des cartes -->
-      <div v-if="filteredThemes.length > 0" class="space-y-6">
+      <div v-if="filteredThemes.length > 0" class="mt-10 space-y-6">
         <div
           v-for="(card, index) in filteredThemes"
           :key="index"
-          class="bg-gray-100 p-4 rounded-lg flex gap-4"
+          class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 transition hover:shadow-md"
         >
-          <div v-if="sortedCards.length > 0" class="flex items-center gap-4">
-            <!-- Afficher le nom de la carte si on n'est pas en mode édition -->
-            <h2 v-if="editingCard?.name !== card.name" class="text-xl font-semibold text-gray-900">
-              <a href="#" @click.prevent="modalVisible(card.value, card.name, card.responseCard, card.image)">{{
-                card.name
-              }}</a>
-            </h2>
+          <div class="flex justify-between items-start gap-4">
+            <div class="flex-1">
+              <!-- Affichage normal -->
+              <h2
+                v-if="editingCard?.name !== card.name"
+                @click.prevent="modalVisible(card.value, card.name, card.responseCard, card.image)"
+                class="text-lg font-semibold text-gray-800 hover:text-blue-600 cursor-pointer"
+              >
+                {{ card.name }}
+              </h2>
 
-            <!-- Formulaire d'édition de cartes -->
-            <form
-              v-if="isEditable && editingCard?.name === card.name"
-              @submit.prevent="PutCards"
-              class="mt-5 flex flex-col gap-4"
-            >
-              <input
-                v-model="CardName"
-                type="text"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              />
-              <input
-                v-model="CardQuestion"
-                type="text"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              />
-              <input
-                v-model="CardResponse"
-                type="text"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              />
-              <div class="flex gap-3">
-                <button
-                  type="submit"
-                  class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600"
-                >
-                  Sauvegarder
-                </button>
-                <!-- Bouton de suppression pour chaque cartes -->
-                <buttondelete @click.prevent="DeleteCards(card.name)" />
-              </div>
-            </form>
+              <!-- Formulaire édition -->
+              <form
+                v-if="isEditable && editingCard?.name === card.name"
+                @submit.prevent="PutCards"
+                class="mt-4 space-y-2"
+              >
+                <input
+                  v-model="CardName"
+                  type="text"
+                  placeholder="Nom"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-300"
+                />
+                <input
+                  v-model="CardQuestion"
+                  type="text"
+                  placeholder="Question"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-300"
+                />
+                <input
+                  v-model="CardResponse"
+                  type="text"
+                  placeholder="Réponse"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-300"
+                />
+                <div class="flex gap-2 mt-2">
+                  <button
+                    type="submit"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                  >
+                    Sauvegarder
+                  </button>
+                  <buttondelete @click.prevent="DeleteCards(card.name)" />
+                </div>
+              </form>
+            </div>
 
-            <button @click.prevent="toggleEdit(card)">
-              <PencilIcon class="px-3 py-2 w-[3rem]" />
-            </button>
-            <span
-              :class="`text-${card.level === 1 ? 'green' : card.level === 2 ? 'blue' : 'red'}-500`"
-            >
-              Niveau: {{ card.level }}
-            </span>
-            <button
-              @click="validateCard(card)"
-              class="bg-green-500 text-white px-2 py-1 rounded-md"
-            >
-              Valider
-            </button>
+            <div class="flex items-center gap-3">
+              <button @click.prevent="toggleEdit(card)">
+                <PencilIcon class="w-6 h-6 text-gray-500 hover:text-gray-800" />
+              </button>
+              <span
+                class="text-sm font-semibold"
+                :class="{
+                  'text-green-600': card.level === 1,
+                  'text-blue-600': card.level === 2,
+                  'text-red-600': card.level >= 3
+                }"
+              >
+                Niveau {{ card.level }}
+              </span>
+              <button
+                @click="validateCard(card)"
+                class="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 text-sm"
+              >
+                Valider
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      <div v-else class="text-center text-gray-500">
-        <p>Aucune cartes créée pour le moment.</p>
+
+      <!-- Aucune carte -->
+      <div v-else class="text-center text-gray-500 mt-10">
+        <p class="text-lg">Aucune carte disponible pour ce thème.</p>
       </div>
     </div>
+
+    <!-- Modal d'aperçu -->
     <modalMemory
       :open="isModalOpen"
       :question="selectedQuestion"
@@ -522,7 +547,6 @@ onMounted(() => {
       :responseC="selectedResponseCard"
       :image="selectedImage"
       @close="closeModal"
-
     />
   </section>
 </template>
