@@ -160,75 +160,102 @@ onMounted(() => {
   }
 })
 </script>
-
 <template>
-  <section class="bg-white shadow-sm">
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex place-content-between">
-      <h1 class="text-3xl font-bold tracking-tight text-gray-900">Mes catégories</h1>
-    </div>
-    <!-- Formulaire pour créer une catégorie -->
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <form @submit.prevent="CreateCategories" class="mt-5 flex flex-col gap-4">
+  <section
+    class="py-12 px-6 bg-gradient-to-br from-indigo-100 via-white to-blue-100
+           border-2 border-blue-400 rounded-3xl shadow-xl max-w-3xl mx-auto mt-16"
+  >
+    <div class="mx-auto max-w-4xl px-6 py-6 sm:px-8 lg:px-10">
+      <div class="mb-8">
+        <h1 class="text-3xl text-center p-5 font-bold tracking-tight text-gray-900"> Mes catégories</h1>
+      </div>
+      <form
+        @submit.prevent="CreateCategories"
+        class="bg-white border border-gray-200 shadow-md rounded-xl p-8 space-y-6"
+      >
+        <h2 class="text-xl text-center p-5 font-semibold text-gray-800">Créer une nouvelle catégorie</h2>
         <div>
-          <label for="categoryName" class="block text-sm font-medium text-gray-700">Nom de la
-            catégorie</label>
+          <label for="categoryName" class="block text-sm font-medium text-gray-700 mb-2">
+            Nom de la catégorie
+          </label>
           <input
             id="categoryName"
             v-model="categoryName"
             type="text"
             required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 p-4"
           />
         </div>
-
-        <div class="flex justify-end">
-          <button type="submit"
-                  class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
-            Créer la catégorie
+        <div class="flex p-3 justify-end">
+          <button
+            type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium"
+          >
+             Créer la catégorie
           </button>
         </div>
       </form>
 
-      <!-- Liste des catégories -->
-      <div v-if="categories.length > 0" class="space-y-6">
-        <div v-for="(category, index) in categories" :key="index" class="bg-gray-100 p-4 rounded-lg flex gap-4">
-          <div class="flex items-center gap-4">
-            <!-- Afficher le nom de la catégorie si on n'est pas en mode édition -->
-            <div>
-            <h2 v-if="!isEditable || editingCategory?.name !== category.name" class="text-xl font-semibold text-gray-900">
-              <router-link
-              :to="{ name: 'Theme', params: { categoryId: category.name }}"
-              class="cursor-pointer text-xl font-semibold text-gray-900 hover:text-blue-600">
-              {{ category.name }}
-              </router-link>
-            </h2>
+
+      <div v-if="categories.length > 0" class="space-y-8 mt-8">
+        <div
+          v-for="(category, index) in categories"
+          :key="index"
+          class="bg-white border border-gray-200 shadow-md rounded-xl p-6"
+        >
+          <div class="flex justify-between items-start gap-6">
+            <div class="flex-1">
+              <h2
+                v-if="!isEditable || editingCategory?.name !== category.name"
+                class="text-lg font-semibold text-gray-800"
+              >
+                <router-link
+                  :to="{ name: 'Theme', params: { categoryId: category.name }}"
+                  class="hover:text-blue-600"
+                >
+                  {{ category.name }}
+                </router-link>
+              </h2>
+
+
+              <form
+                v-if="isEditable && editingCategory?.name === category.name"
+                @submit.prevent="PutCategories"
+                class="mt-4 space-y-3"
+              >
+                <input
+                  v-model="categoryName"
+                  type="text"
+                  required
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 p-4"
+                />
+                <div class="flex gap-4">
+                  <button
+                    type="submit"
+                    class="bg-blue-600 text-white px-5 py-3 rounded-md hover:bg-blue-700"
+                  >
+                    Sauvegarder
+                  </button>
+                  <buttondelete @click.prevent="DeleteCategories(category.name)" />
+                </div>
+              </form>
             </div>
-            <!-- Formulaire d'édition de catégorie -->
-            <form v-if="isEditable && editingCategory?.name === category.name" @submit.prevent="PutCategories" class="mt-5 flex flex-col gap-4">
-              <input
-                v-model="categoryName"
-                type="text"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              />
-              <div class="flex gap-4">
-              <button type="submit" class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
-                Sauvegarder
-              </button>
-              <!-- Bouton de suppression pour chaque catégorie -->
-              <buttondelete @click.prevent="DeleteCategories(category.name)" />
-              </div>
-            </form>
 
             <button @click.prevent="toggleEdit(category)">
-              <PencilIcon class="px-3 py-2 w-[3rem]" />
+              <PencilIcon class="w-6 h-6 text-gray-500 hover:text-gray-800" />
             </button>
           </div>
         </div>
       </div>
-      <div v-else class="text-center text-gray-500">
+       <div v-else class="text-center p-3 0text-gray-500 mt-8">
         <p>Aucune catégorie créée pour le moment.</p>
       </div>
     </div>
   </section>
 </template>
+
+
+
+
+
+
