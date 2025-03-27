@@ -19,7 +19,7 @@ const toggleEdit = (theme: any) => {
   themeDescription.value = theme.description
 }
 
-// Filtrage des thèmes en fonction de la catégorie sélectionnée
+// Filtrage des thèmes en fonction du thème sélectionnée
 const filteredThemes = computed(() => {
   return themes.value.filter((theme) => theme.themeId == props.themeId)
 })
@@ -158,6 +158,7 @@ const DeleteTheme = async (themeName: string) => {
   }
 }
 
+//Montage et rendu des éléments d'affichage
 onMounted(() => {
   if (navigator.serviceWorker) {
     navigator.serviceWorker.ready.then((registration) => {
@@ -181,6 +182,7 @@ onMounted(() => {
       <h1 class="text-3xl font-bold tracking-tight text-gray-900">Thèmes de la catégorie {{ themeId
         }}</h1>
     </div>
+    <!--Formulaire de création de thème-->
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <form @submit.prevent="Createtheme">
         <label for="themeName" class="block text-sm font-bold tracking-tight text-gray-900">
@@ -213,12 +215,12 @@ onMounted(() => {
         </div>
       </form>
 
-      <!-- Liste des catégories -->
+      <!-- Liste des thèmes -->
       <div v-if="filteredThemes.length > 0" class="space-y-6">
         <div v-for="(theme, index) in filteredThemes" :key="index"
              class="bg-gray-100 p-4 rounded-lg flex gap-4">
           <div class="flex items-center gap-4">
-            <!-- Afficher le nom de la catégorie si on n'est pas en mode édition -->
+            <!-- Afficher le nom du thème si on n'est pas en mode édition -->
             <h2 v-if="!isEditable || editingTheme?.name !== theme.name"
                 class="text-xl font-semibold text-gray-900">
               <router-link
@@ -231,7 +233,7 @@ onMounted(() => {
               <p v-if="!isEditable || editingTheme?.name !== theme.name">{{ theme.description }}</p>
             </div>
 
-            <!-- Formulaire d'édition de catégorie -->
+            <!-- Formulaire d'édition de thème -->
             <form v-if="isEditable && editingTheme?.name === theme.name" @submit.prevent="PutTheme"
                   class="mt-5 flex flex-col gap-4">
               <input
@@ -245,7 +247,7 @@ onMounted(() => {
                         class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
                   Sauvegarder
                 </button>
-                <!-- Bouton de suppression pour chaque catégorie -->
+                <!-- Bouton de suppression pour chaque thème -->
                 <buttondelete @click.prevent="DeleteTheme(theme.name)" />
               </div>
             </form>

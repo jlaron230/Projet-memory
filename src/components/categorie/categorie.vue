@@ -111,13 +111,6 @@ const PutCategories = () => {
   categoryName.value = ''
 }
 
-// Fonction pour annuler l'édition
-const cancelEdit = () => {
-  isEditable.value = false
-  editingCategory.value = null
-  categoryName.value = ''
-}
-
 // Fonction pour supprimer une catégorie
 const DeleteCategories = async (categoryName: string) => {
   if (!categoryName || typeof categoryName !== 'string') return console.error('Nom de catégorie invalide');
@@ -145,6 +138,7 @@ const DeleteCategories = async (categoryName: string) => {
   }
 };
 
+//Montage et rendu des éléments d'affichage
 onMounted(() => {
   if (navigator.serviceWorker) {
     navigator.serviceWorker.ready.then((registration) => {
@@ -219,7 +213,7 @@ onMounted(() => {
               <buttondelete @click.prevent="DeleteCategories(category.name)" />
               </div>
             </form>
-
+            <!-- Bouton pour éditer une catégorie -->
             <button @click.prevent="toggleEdit(category)">
               <PencilIcon class="px-3 py-2 w-[3rem]" />
             </button>
