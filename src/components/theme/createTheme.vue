@@ -2,7 +2,6 @@
 import { ref, onMounted, computed } from 'vue'
 import buttondelete from '@/components/button/button-delete.vue'
 import { PencilIcon } from '@heroicons/vue/20/solid'
-
 const themes = ref<any[]>([])
 const themeName = ref<string>('')
 const themeDescription = ref<string>('')
@@ -82,20 +81,16 @@ const getThemesFromCache = async () => {
         }
       }
     }
-
     themes.value = cachedThemes.filter(theme => theme.themeId === props.themeId)
     console.log('Thèmes après récupération du cache :', themes.value)
   }
 }
-
-
 // Fonction pour mettre à jour un thème
 const PutTheme = () => {
   if (!themeName.value.trim() && !themeDescription.value.trim()) {
     alert('Le nom du thème est requis')
     return
   }
-
   // Mise à jour du thème dans le tableau local de Vue
   const themeIndex = themes.value.findIndex(c => c.name === editingTheme.value.name)
   if (themeIndex !== -1) {
@@ -105,7 +100,6 @@ const PutTheme = () => {
       description: themeDescription.value
     }
   }
-
   // Envoi de la mise à jour au Service Worker pour qu'il mette à jour le cache
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage({
@@ -119,15 +113,11 @@ const PutTheme = () => {
       }
     })
   }
-
-  // Désactiver l'édition après avoir sauvegardé
   isEditable.value = false
   editingTheme.value = null
   themeName.value = ''
   themeDescription.value = ''
 }
-
-// Fonction pour supprimer un thème
 const DeleteTheme = async (themeName: string) => {
   if (!themeName || typeof themeName !== 'string') return console.error('Nom du thème invalide')
 
@@ -157,7 +147,6 @@ const DeleteTheme = async (themeName: string) => {
     }
   }
 }
-
 onMounted(() => {
   if (navigator.serviceWorker) {
     navigator.serviceWorker.ready.then((registration) => {
@@ -172,18 +161,17 @@ onMounted(() => {
     console.error('Service Worker n\'est pas pris en charge par ce navigateur')
   }
 })
-
 </script>
-
 <template>
-  <section class="bg-white shadow-sm">
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex place-content-between">
-      <h1 class="text-3xl font-bold tracking-tight text-gray-900">Thèmes de la catégorie {{ themeId
-        }}</h1>
+  <section class="py-12 px-6 bg-gradient-to-br from-indigo-100 via-white to-blue-100
+          border-2 border-blue-400 rounded-3xl shadow-2xl max-w-3xl mx-auto mt-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-12">
+      <h1 class="text-3xl text-center p-5 font-bold tracking-tight text-gray-900">Thèmes de la catégorie {{ themeId }}</h1>
     </div>
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <form @submit.prevent="Createtheme">
-        <label for="themeName" class="block text-sm font-bold tracking-tight text-gray-900">
+    <form @submit.prevent="Createtheme" class="bg-white border border-gray-200 shadow-lg rounded-xl p-8 space-y-6">
+      <h2 class="text-xl font-semibold text-gray-800">Créer un nouveau thème</h2>
+      <div>
+        <label for="themeName" class="block text-sm font-medium text-gray-700 mb-2">
           Nom du thème :
         </label>
         <input
@@ -191,74 +179,76 @@ onMounted(() => {
           v-model="themeName"
           type="text"
           required
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 p-4"
         />
-        <label for="themeDescription"
-               class="block text-sm font-bold tracking-tight text-gray-900 mt-4">
+      </div>
+      <div>
+        <label for="themeDescription" class="block text-sm font-medium text-gray-700 mb-2">
           Description du thème :
         </label>
         <textarea
           id="themeDescription"
           v-model="themeDescription"
           required
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 p-4"
         ></textarea>
-        <div class="flex justify-end mt-4">
-          <button
-            type="submit"
-            class="mt-1 block rounded-md bg-indigo-600 text-white px-4 py-2 shadow-sm hover:bg-indigo-700"
-          >
-            Ajouter
-          </button>
-        </div>
-      </form>
+      </div>
 
-      <!-- Liste des catégories -->
-      <div v-if="filteredThemes.length > 0" class="space-y-6">
-        <div v-for="(theme, index) in filteredThemes" :key="index"
-             class="bg-gray-100 p-4 rounded-lg flex gap-4">
-          <div class="flex items-center gap-4">
-            <!-- Afficher le nom de la catégorie si on n'est pas en mode édition -->
-            <h2 v-if="!isEditable || editingTheme?.name !== theme.name"
-                class="text-xl font-semibold text-gray-900">
+      <div class="flex justify-end mt-4">
+        <button
+          type="submit"
+          class="bg-blue-600 text-white p-5 px-6 py-3 rounded-md font-medium hover:bg-blue-700"
+        >
+          Ajouter
+        </button>
+      </div>
+    </form>
+    <div v-if="filteredThemes.length > 0" class="space-y-8 mt-10">
+      <div v-for="(theme, index) in filteredThemes" :key="index" class="bg-white border border-gray-200 shadow-md rounded-xl p-6">
+        <div class="flex justify-between items-start gap-6">
+          <div class="flex-1">
+            <!-- Affichage nom -->
+            <h2 v-if="!isEditable || editingTheme?.name !== theme.name" class="text-xl font-semibold text-gray-900">
               <router-link
                 :to="{ name: 'CardTheme', params: { themeId: theme.name }}"
-                class="cursor-pointer text-xl font-semibold text-gray-900 hover:text-blue-600">
+                class="cursor-pointer text-xl font-semibold text-gray-900 hover:text-blue-600"
+              >
                 {{ theme.name }}
               </router-link>
             </h2>
             <div>
               <p v-if="!isEditable || editingTheme?.name !== theme.name">{{ theme.description }}</p>
             </div>
-
-            <!-- Formulaire d'édition de catégorie -->
-            <form v-if="isEditable && editingTheme?.name === theme.name" @submit.prevent="PutTheme"
-                  class="mt-5 flex flex-col gap-4">
+            <form v-if="isEditable && editingTheme?.name === theme.name" @submit.prevent="PutTheme" class="mt-6 space-y-4">
               <input
                 v-model="themeName"
                 type="text"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 p-4"
               />
               <div class="flex gap-4">
-                <button type="submit"
-                        class="inline-flex items-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white ring-1 shadow-xs ring-blue-300 ring-inset hover:bg-blue-600">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700">
                   Sauvegarder
                 </button>
-                <!-- Bouton de suppression pour chaque catégorie -->
-                <buttondelete @click.prevent="DeleteTheme(theme.name)" />
+                <button
+                  type="button"
+                  @click.prevent="DeleteTheme(theme.name)"
+                  class="bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700"
+                >
+                  Supprimer
+                </button>
               </div>
             </form>
-
-            <button @click.prevent="toggleEdit(theme)">
-              <PencilIcon class="px-3 py-2 w-[3rem]" />
-            </button>
           </div>
+          <button @click.prevent="toggleEdit(theme)">
+            <PencilIcon class="w-6 h-6 text-gray-500 hover:text-gray-800" />
+          </button>
         </div>
       </div>
-      <div v-else class="text-center text-gray-500">
-        <p>Aucune catégorie créée pour le moment.</p>
-      </div>
+    </div>
+    <div v-else class="text-center p-5 text-gray-500 mt-8">
+      <p>Aucune thème créée pour le moment.</p>
     </div>
   </section>
-</template>’
+</template>
+
