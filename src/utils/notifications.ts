@@ -1,5 +1,7 @@
-let notificationInterval = null;
+//Variable pour l'interval des notifications
+let notificationInterval :number | null = null;
 
+//Fonction pour l'autorisation des notifications
 export async function requestNotificationPermission() {
   if (!("Notification" in window)) {
     console.warn("❌ Les notifications ne sont pas supportées.");
@@ -19,7 +21,7 @@ export async function requestNotificationPermission() {
   }
 }
 
-
+//Fonction pour l'exécution des notifs
 export function scheduleDailyNotification() {
   if (Notification.permission !== "granted") {
     console.warn("⚠️ Notifications non autorisées.");
@@ -42,7 +44,7 @@ export function scheduleDailyNotification() {
     targetTime.setDate(targetTime.getDate() + 1);
   }
 
-  const delay = targetTime - now; // Temps avant la notif en ms
+  const delay = targetTime.getTime() - now.getTime(); // Temps avant la notif en ms
 
   setTimeout(() => {
     sendNotification();
@@ -63,13 +65,13 @@ function sendNotification() {
     icon: "/icons/notification-icon.png",
   });
 }
-
+//fonction pour stopper les notifications si les notifications sont activé ainsi que l'interval avant la prochaine
 export function stopNotifications() {
   if (notificationInterval) {
     clearInterval(notificationInterval);
     notificationInterval = null;
-    console.log("❌ Notifications arrêtées !");
+    console.log(" Notifications arrêtées !");
   } else {
-    console.warn("⚠️ Aucune notification en cours.");
+    console.warn("Aucune notification en cours.");
   }
 }

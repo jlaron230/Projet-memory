@@ -4,103 +4,57 @@ import ButtonView from '@/components/button/button-view.vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
 const isView = ref(false)
+const isVisible = computed(() => props.open)
 
-const props = defineProps<{
-  open: boolean
-  question: string | null
-  nameCard: string | null
-  responseC: string | null
-  image: string | null
-}>()
-
+const props = defineProps<{ open: boolean, question: string | null, nameCard: string | null, responseC: string | null, image: string | null }>()
 const emit = defineEmits(['close'])
 
-const isVisible = computed(() => props.open)
-const imageSrc = computed(() => props.image ?? undefined)
+const imageSrc = computed(() => props.image ?? undefined);
 
 const closeDialog = () => {
   isView.value = false
   emit('close')
 }
-
+//Fonction pour la visibilité de la carte
 const isViewResponse = () => {
   isView.value = !isView.value
 }
 </script>
 
 <template>
-  <TransitionRoot as="template" :show="isVisible">
-    <Dialog class="relative z-10" @close="closeDialog">
-      <!-- Fond semi-transparent -->
-      <TransitionChild
-        as="template"
-        enter="ease-out duration-300"
-        enter-from="opacity-0"
-        enter-to="opacity-100"
-        leave="ease-in duration-200"
-        leave-from="opacity-100"
-        leave-to="opacity-0"
-      >
+  <TransitionRoot as="template" :show="isVisible" @close="isView = false">
+    <Dialog class="relative z-10" @close="emit('close')">
+      <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
         <div class="fixed inset-0 bg-gray-500/75 transition-opacity" />
       </TransitionChild>
 
       <!-- Conteneur principal -->
       <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <!-- Contenu de la carte -->
-          <TransitionChild
-            as="template"
-            enter="ease-out duration-300"
-            enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            enter-to="opacity-100 translate-y-0 sm:scale-100"
-            leave="ease-in duration-200"
-            leave-from="opacity-100 translate-y-0 sm:scale-100"
-            leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-          >
-            <DialogPanel
-              class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl"
-            >
-              <div class="bg-white px-6 py-6">
-                <div class="flex flex-col items-center space-y-4">
-                  <h2 class="text-2xl font-bold text-gray-800">
-                    {{ isView ? 'Verso' : 'Recto' }}
-                  </h2>
-
-                  <DialogTitle
-                    as="h3"
-                    class="text-xl font-semibold text-blue-600 text-center"
-                  >
-                    {{ props.nameCard }}
-                  </DialogTitle>
-
-                  <div class="w-full text-center space-y-4">
-                    <p class="text-base text-gray-700 whitespace-pre-line">
-                      {{ isView ? props.responseC : props.question }}
-                    </p>
-
-                    <div
-                      v-if="!isView && props.image?.length != 0"
-                      class="flex justify-center"
-                    >
-                      <img
-                        :src="imageSrc"
-                        alt="Image de la carte"
-                        class="max-h-64 rounded-lg shadow-md object-contain"
-                      />
+        <div ref="element" class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+            <DialogPanel ref="element" class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl">
+              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start flex justify-center">
+                  <div v-if="!isView" class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h2 class="text-center">Recto</h2>
+                    <DialogTitle as="h3" class="text-base font-semibold text-center text-gray-900">{{props.nameCard}}</DialogTitle>
+                    <div class="mt-2">
+                      <p class="text-sm text-gray-500">{{props.question}}</p>
+                      <div v-if="props.image?.length != 0">
+                      <img :src="imageSrc" alt="Une image">
+                      </div>
+                      <div v-else>
+                      </div>
                     </div>
+                  </div>
+                  <div v-else class="mt-2">
+                    <h2 class="text-center">Verso</h2>
+                    <p class="text-sm text-gray-500">{{props.responseC}}</p>
                   </div>
                 </div>
               </div>
-
-              <!-- Boutons -->
-              <div class="bg-gray-50 px-6 py-4 flex justify-between sm:justify-end gap-4">
-                <button
-                  type="button"
-                  class="inline-flex items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-800 ring-1 ring-gray-300 hover:bg-gray-100 transition"
-                  @click="closeDialog"
-                >
-                  Retour
-                </button>
+              <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 shadow-xs ring-gray-300 ring-inset hover:bg-gray-50 sm:mt-0 sm:w-auto" @close.prevent="isViewResponse" @click="closeDialog">Retour</button>
                 <ButtonView @click.prevent="isViewResponse" />
               </div>
             </DialogPanel>

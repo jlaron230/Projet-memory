@@ -43,6 +43,8 @@ L'application fonctionne **hors-ligne** grâce à l'utilisation d'un **Service W
 - **IndexedDB ou CacheStorage** pour stocker les données de révision.
 
 ---
+## Retrouve la documentation des composants sur le fichier : 
+- **ComponentsListing.md**
 
 ## 📌 Déploiement
 

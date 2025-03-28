@@ -93,6 +93,7 @@ const filteredThemes = computed(() => {
   )
 })
 
+//fonction pour fermer la modal
 const closeModal = () => {
   isModalOpen.value = false
   selectedQuestion.value = null
@@ -100,7 +101,7 @@ const closeModal = () => {
   selectedResponseCard.value = null
   selectedImage.value = null
 }
-
+//fonction pour filtrer les cartes en fonction du thème et de leur date de révision
 const sortedCards = computed(() => {
   return cards.value
     .filter((card) => card.themeId === props.themeId)
@@ -118,7 +119,7 @@ const toggleEdit = (cards: any) => {
   isEditable.value = true
   CardImage.value = cards.image
 }
-
+//fonction pour uploader un fichier, conversion en base64
 const handelFileUpload = async (e: any) => {
   const files = e.target.files || e.dataTransfer.files;
   if (!files.length) return;
@@ -229,7 +230,7 @@ const validateCard = async (card: any) => {
   }
   await getCardsFromCache();
 }
-
+//Mettre à jour la carte
 const updateCardInCache = async (updatedCard: any) => {
   if ('caches' in window) {
     try {
@@ -358,7 +359,7 @@ onMounted(() => {
     navigator.serviceWorker.ready
       .then(() => {
         console.log('Service Worker est prêt')
-        // Appelle la fonction pour récupérer les cartes à partir du cache ici
+        // Appelle la fonction pour récupérer les cartes à partir du cache
         getCardsFromCache()
         loadLimitFromCache() // Charger la limite personnalisée
         updateTotalReviewedToday()
@@ -538,8 +539,6 @@ onMounted(() => {
         <p class="text-lg">Aucune carte disponible pour ce thème.</p>
       </div>
     </div>
-
-    <!-- Modal d'aperçu -->
     <modalMemory
       :open="isModalOpen"
       :question="selectedQuestion"

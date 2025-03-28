@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { CheckIcon } from '@heroicons/vue/20/solid'
+
+//bouton pour voir la réponse
 </script>
 
 <template>
