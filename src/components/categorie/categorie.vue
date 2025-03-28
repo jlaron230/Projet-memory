@@ -177,7 +177,7 @@ onMounted(() => {
             v-model="categoryName"
             type="text"
             required
-            class="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 p-4"
+            class="border-solid border-red-50 w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 p-4"
           />
         </div>
         <div class="flex p-3 justify-end">

@@ -2,25 +2,13 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './views/Accueil.vue'
-import { requestNotificationPermission, scheduleDailyNotification, stopNotifications } from "./utils/notifications.ts";
 
-const enableNotifications = () => {
-  requestNotificationPermission();
-  scheduleDailyNotification();
-  stopNotifications();
-};
 </script>
 
 <template>
   <header>
     <div class="wrapper">
       <HelloWorld msg="You did it!" />
-      <button @click="enableNotifications">Activer les notifications 🔔</button>
-      <button @click="stopNotifications">Arrêter les notifications 🔔</button>
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
     </div>
   </header>
   <RouterView />
