@@ -1,16 +1,24 @@
 <template>
   <div>
     <header
-      class="w-full fixed top-0 left-0 z-50 transition-all duration-300 flex items-center px-6 md:px-16 lg:px-24 bg-blue-600"
+      class="justify-between w-full fixed top-0 left-0 z-50 transition-all duration-300 flex items-center px-6 md:px-16 lg:px-24 bg-blue-600"
       :class="{ 'bg-blue-800 py-2 shadow-md': isScrolled, 'bg-blue-600 py-4': !isScrolled }"
     >
+      <router-link to="/">
       <h1 class="text-xl md:text-3xl font-bold flex-shrink-0 !text-white">Projet Memory</h1>
+      </router-link>
       <nav class="hidden md:flex flex-grow justify-center">
         <ul class="flex gap-4 text-lg">
-          <li><router-link to="/categorie" class="!text-white hover:text-blue-300 transition">Catégories</router-link></li>
+          <li><router-link to="/categorie" class="!text-white hover:text-blue-300 transition">Révision</router-link></li>
           <li><router-link to="/aide" class="!text-white hover:text-blue-300 transition">Aide / À propos</router-link></li>
         </ul>
       </nav>
+      <button @click="notification" class="!text-white">
+        <Cog6ToothIcon class="w-10"/>
+      </button>
+      <div v-if="isOpenModal">
+      <ModalNotification :isOpen="isOpenModal" @close="isOpenModal = false"/>
+      </div>
       <button
         @click="toggleMenu"
         class="md:hidden ml-auto focus:outline-none"
@@ -52,9 +60,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-
+import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
+import ModalNotification from '@/components/header/modal-notification.vue'
 const isScrolled = ref(false);
 const isMenuOpen = ref(false); // Gère l'affichage du menu burger
+const isOpenModal = ref(false);
 
 // Vérifier si le menu doit être affiché en desktop
 onMounted(() => {
@@ -69,6 +79,10 @@ onUnmounted(() => {
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50;
 };
+
+const notification = () => {
+  isOpenModal.value = !isOpenModal.value;
+}
 
 // Ouvrir / fermer le menu burger
 const toggleMenu = () => {
