@@ -9,7 +9,7 @@
       </router-link>
       <nav class="hidden md:flex flex-grow justify-center">
         <ul class="flex gap-4 text-lg">
-          <li><router-link to="/categorie" class="!text-white hover:text-blue-300 transition">Révision</router-link></li>
+          <li><router-link to="/categorie" class="!text-white hover:text-blue-300 transition">Catégorie</router-link></li>
           <li><router-link to="/aide" class="!text-white hover:text-blue-300 transition">Aide / À propos</router-link></li>
         </ul>
       </nav>
