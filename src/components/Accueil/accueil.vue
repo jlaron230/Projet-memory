@@ -1,11 +1,11 @@
 <template>
-  <div class="rounded-md flex items-center justify-center bg-gradient-to-br text-white px-6 py-12 ">
+  <div class="rounded-md flex items-center justify-center bg-gradient-to-br  text-white px-4 sm:px-6 py-10 sm:py-12 sm:px-8">
 
     <!-- Border dégradé autour de la carte avec animation -->
-    <div class="relative p-[2px] h-100 rounded-3xl bg-gradient-to-tr from-blue-300 via-blue-500 to-cyan-300 shadow-2xl hover:shadow-blue-400/40 transition-all duration-500 animate-fade-up">
+    <div class="relative p-[2px] w-full max-w-md sm:max-w-xl rounded-3xl bg-gradient-to-tr from-blue-300 via-blue-500 to-cyan-300 shadow-2xl hover:shadow-blue-400/40 transition-all duration-500 animate-fade-up">
 
       <!-- Carte intérieure avec fond flouté -->
-      <div class="rounded-3xl bg-white/5 backdrop-blur-md p-10 text-center text-white">
+      <div class="rounded-3xl bg-white/5 backdrop-blur-md px-6 py-8 sm:px-10 sm:py-10 text-center text-white">
 
         <!-- Logo -->
         <div class="flex justify-center mb-6">
@@ -17,15 +17,14 @@
         </div>
 
         <!-- Titre -->
-        <h1 class="text-3xl p-5 sm:text-4xl font-bold mb-4">
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 px-2 leading-snug">
           Bienvenue dans le <span class="text-yellow-300">projet Memory</span>
         </h1>
 
         <!-- Slogan -->
-        <p class="text-white/90 p-5 text-base mb-6">
+        <p class="text-sm sm:text-base text-white/90 px-2 leading-relaxed">
           Un jeu fun, malin et stimulant pour entraîner ta mémoire !<br />
-          Clique  sur catégorie pour entrer dans l’univers la nicolas Faissel🧠
-
+          Clique sur <span class="font-semibold text-yellow-300">catégorie</span> pour entrer dans l’univers de Nicolas Faissel 🧠
         </p>
 
       </div>
@@ -51,4 +50,3 @@
   }
 }
 </style>
-
