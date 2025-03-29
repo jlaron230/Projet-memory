@@ -75,3 +75,4 @@ L'application fonctionne **hors-ligne** grâce à l'utilisation d'un **Service W
 
 ## Conclusion
 Vercel facilite le déploiement automatisé de votre projet "Memory" à partir de GitHub.
+-
