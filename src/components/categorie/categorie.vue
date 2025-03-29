@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue'
 import buttondelete from '@/components/button/button-delete.vue'
 import { PencilIcon } from '@heroicons/vue/20/solid'
-import CardTheme from '@/views/CardTheme.vue'
 import Theme from '@/views/Theme.vue'
 
 const categoryName = ref<string>('')  // Pour la création de la catégorie
