@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup >
 //Import du composant de thème pour la page
 import CreateTheme from'@/components/theme/createTheme.vue'
 

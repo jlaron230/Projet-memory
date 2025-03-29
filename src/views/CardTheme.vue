@@ -1,6 +1,6 @@
-<script setup lang="ts">
+<script setup >
 //Import du composant de carte pour la page
-import cardTheme from '@/components/cardTheme/cardTheme.vue'
+import cardTheme  from '@/components/cardTheme/cardTheme.vue'
 </script>
 
 <template>

@@ -1,5 +1,5 @@
 //Variable pour l'interval des notifications
-let notificationInterval :number | null = null;
+let notificationInterval: ReturnType<typeof setInterval> | null = null;
 
 //Fonction pour l'autorisation des notifications
 export async function requestNotificationPermission() {
