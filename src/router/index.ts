@@ -13,15 +13,6 @@ const router = createRouter({
       component: Accueil,
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      //Routes de l'application avec l'id en fonction de la catégorie et du thème associé
-      component: () => import('../views/AboutView.vue'),
-    },
-    {
       path: '/categorie',
       name: 'categorie',
       component: Categorie,

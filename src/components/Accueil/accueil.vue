@@ -32,21 +32,4 @@
   </div>
 </template>
 
-<style scoped>
-@layer utilities {
-  @keyframes fade-up {
-    0% {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 
-  .animate-fade-up {
-    animation: fade-up 1s ease-out forwards;
-  }
-}
-</style>

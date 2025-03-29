@@ -5,6 +5,5 @@ import accueil from '@/components/Accueil/accueil.vue';
 </script>
 
 <template>
-  <Header/>
   <accueil/>
 </template>

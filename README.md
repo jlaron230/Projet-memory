@@ -54,3 +54,24 @@ L'application fonctionne **hors-ligne** grâce à l'utilisation d'un **Service W
    ```sh
    git clone git@github.com:jlaron230/Projet-memory.git
    cd Projet-memory
+
+# Documentation : Déploiement sur Vercel
+
+## 1. Prérequis
+- Compte GitHub avec le projet.
+- Compte Vercel.
+
+## 2. Étapes de déploiement
+1. Connectez-vous à Vercel avec GitHub.
+2. Cliquez sur **"New Project"** et sélectionnez votre dépôt GitHub.
+3. Vercel détecte automatiquement la configuration du projet.
+4. Cliquez sur **"Deploy"** pour lancer le déploiement.
+
+## 3. Accès à l'application
+- Une fois le déploiement terminé, un lien vers votre application sera fourni.
+
+## 4. Mise à jour automatique
+- À chaque push sur GitHub, Vercel déploie automatiquement la nouvelle version.
+
+## Conclusion
+Vercel facilite le déploiement automatisé de votre projet "Memory" à partir de GitHub.
