@@ -6,6 +6,7 @@ import { createTheme, updateTheme, deleteTheme} from './theme.js'
 const CACHE_ASSETS = 'assets-v1';
 
 
+
 // Écoute l'événement 'install' pour mettre en cache les ressources nécessaires
 
 self.addEventListener('install', (event) => {
