@@ -57,6 +57,8 @@ L'application fonctionne **hors-ligne** grâce à l'utilisation d'un **Service W
 
 # Documentation : Déploiement sur Vercel
 
+Lien du projet : https://projet-memory.vercel.app/
+
 ## 1. Prérequis
 - Compte GitHub avec le projet.
 - Compte Vercel.
